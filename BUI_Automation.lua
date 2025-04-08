@@ -789,6 +789,18 @@ function BUI.Automation_Init()
 		EVENT_MANAGER:RegisterForEvent("BUI_Event",EVENT_SHOW_BOOK,BookHandler)
 	end
 
+	-- Motif Auto Close
+	if BUI.Vars.Books then
+		local function MotifHandler(eventCode, inBook)
+			local action,item,_,_ ,_,_=GetGameCameraInteractableActionInfo()
+			if action == nil then
+				SCENE_MANAGER:ShowBaseScene()
+			end
+		end
+		-- EVENT_SHOW_BOOK (number eventCode, string bookTitle, string body, BookMedium medium, boolean showTitle, number bookId)
+		EVENT_MANAGER:RegisterForEvent("BUI_Event_Motif", EVENT_SHOW_BOOK, MotifHandler)
+	end
+
 	if BUI.Vars.FriendStatus then
 		EVENT_MANAGER:UnregisterForEvent("ChatRouter", EVENT_FRIEND_PLAYER_STATUS_CHANGED)
 	end
