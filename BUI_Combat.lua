@@ -1,25 +1,29 @@
 --DAMAGE MANAGEMENT COMPONENT
-local Element={
-	[0]="None",
-	[1]="Generic",
-	[2]="Physical",
-	[3]="Fire",
-	[4]="Shock",
-	[5]="Oblivion",
-	[6]="Cold",
-	[7]="Earth",
-	[8]="Magic",
-	[9]="Drown",
-	[10]="Diesease",
-	[11]="Poison"
-	}
-local AdditionalAbilityName={
-	[16688]=" (Bow)",[17173]=" (Bow)",
-	[16499]=" (Dual)",[17169]=" (Dual Right))",
-	[16037]=" (Two hand)",[17162]=" (Two Hand)",[17163]=" (Two Hand)",
-	[15435]=" (One hand)",[15829]=" (One Hand)",
-	}
-local Multy_element={}
+BUI.Damage.AdditionalAbilityName = {}
+BUI.Damage.AdditionalAbilityName[16688] = " (Bow)"
+BUI.Damage.AdditionalAbilityName[17173] = " (Bow)"
+BUI.Damage.AdditionalAbilityName[16499] = " (Dual)"
+BUI.Damage.AdditionalAbilityName[17169] = " (Dual Right))"
+BUI.Damage.AdditionalAbilityName[16037] = " (Two hand)"
+BUI.Damage.AdditionalAbilityName[17162] = " (Two Hand)"
+BUI.Damage.AdditionalAbilityName[17163] = " (Two Hand)"
+BUI.Damage.AdditionalAbilityName[15435] = " (One hand)"
+BUI.Damage.AdditionalAbilityName[15829] = " (One Hand)"
+BUI.Damage.Element = {}
+BUI.Damage.Element[0] = "None"
+BUI.Damage.Element[1] = "Generic"
+BUI.Damage.Element[2] = "Physical"
+BUI.Damage.Element[3] = "Fire"
+BUI.Damage.Element[4] = "Shock"
+BUI.Damage.Element[5] = "Oblivion"
+BUI.Damage.Element[6] = "Cold"
+BUI.Damage.Element[7] = "Earth"
+BUI.Damage.Element[8] = "Magic"
+BUI.Damage.Element[9] = "Drown"
+BUI.Damage.Element[10] = "Diesease"
+BUI.Damage.Element[11] = "Poison"
+BUI.Damage.Multy_element = {}
+
 --[[
 local function Targets_Init()	--TARGETS REPORT
 	local Targets	=BUI.UI.Control(	"BUI_Targets",					BanditsUI,	{390,200},				BUI.Vars.BUI_Targets,			true)
@@ -85,39 +89,7 @@ local function TargetsDeveloperWindowUpdate()
 	if not BUI.TargetsWinowLoop then BUI.TargetsWinowLoop=true BUI.CallLater("TargetsWinow",8000,function() BUI.TargetsWinowLoop=false parent:SetHidden(true) end) end
 end
 --]]
-function BUI.Damage.Attackers_UI()	--UI init
-	local ch,ch1=BUI.Vars.FrameHealthColor,BUI.Vars.FrameHealthColor1
-	local w,h=BUI.Vars.AttackersWidth,BUI.Vars.AttackersHeight
-	local fs=math.min(BUI.Vars.RaidFontSize,h*.8)
-	local theme_color=BUI.Vars.Theme==6 and {1,204/255,248/255,1} or BUI.Vars.Theme==7 and BUI.Vars.AdvancedThemeColor or BUI.Vars.CustomEdgeColor
-	local function CrateHitAnimation(control)
-		local animation, timeline=CreateSimpleAnimation(ANIMATION_COLOR,control,0)
-		animation:SetColorValues(1,.8,.8,1,unpack(ch))
-		animation:SetDuration(750)
-		timeline:SetPlaybackType(ANIMATION_PLAYBACK_ONE_SHOT,1)
-		return timeline
-	end
-
-	local ui	=BUI.UI.Control(	"BUI_Attackers",				BanditsUI,	{w,h*3+8},		BUI.Vars.BUI_Attackers or {TOPLEFT,TOP,710/2,5,ZO_CompassFrame},	not (BUI.Vars.Attackers and BUI.inMenu))
-	ui.backdrop	=BUI.UI.Backdrop(	"BUI_Attackers_BG",			ui,		"inherit",		{CENTER,CENTER,0,0},	{0,0,0,0.4}, {0,0,0,1}, nil, true)
-	ui.label	=BUI.UI.Label(	"BUI_Attackers_Label",			ui.backdrop,	"inherit",	{CENTER,CENTER,0,0},	BUI.UI.Font("standard",20,true), nil, {1,1}, BUI.Loc("Attackers"))
-	ui:SetDrawTier(DT_HIGH)
-	ui:SetMovable(true)
-	ui:SetHandler("OnMouseUp", function(self) BUI.Menu:SaveAnchor(self) end)
-
-	local anchor	={TOPLEFT,TOPLEFT,0,0,ui}
-	for i=1, 10 do
-		ui[i]		=BUI.UI.Backdrop("BUI_Attackers"..i.."_Health",		ui,		{w,h},		anchor,			{0,0,0,1}, theme_color, nil, not (i==1 and BUI.inMenu)) ui[i]:SetDrawTier(0)
-		ui[i].bar	=BUI.UI.Statusbar("BUI_Attackers"..i.."_Bar",		ui[i],	{w-4,h-4},		{LEFT,LEFT,2,0},		ch, BUI.Textures[BUI.Vars.FramesTexture])
---		ui[i].bar:SetGradientColors(ch[1],ch[2],ch[3],ch[4],ch1[1],ch1[2],ch1[3],ch1[4])
-		ui[i].name	=BUI.UI.Label(	"BUI_Attackers"..i.."_Name",		ui[i],	{w,h},		{LEFT,LEFT,8,0},		BUI.UI.Font(BUI.Vars.FrameFont1,fs,true), nil, {0,1}, 'Name')
-		ui[i].pct	=BUI.UI.Label(	"BUI_Attackers"..i.."_Pct",		ui[i],	{w,h},		{RIGHT,RIGHT,-8,0},	BUI.UI.Font(BUI.Vars.FrameFont2,fs,true), nil, {2,1}, 'Damage')
-		ui[i].hit	=CrateHitAnimation(ui[i].bar)
-		anchor={TOP,BOTTOM,0,4,ui[i]}
-	end
-end
-
-local function AttackersUpdate(now,unitId)
+local function AttackersUpdate(now, unitId)
 	if not BUI.Vars.Attackers then return end
 	now=now or GetGameTimeMilliseconds()
 	local w=BUI.Vars.AttackersWidth-4
@@ -163,6 +135,38 @@ local function AttackersUpdate(now,unitId)
 		end
 	end
 	EVENT_MANAGER:RegisterForUpdate("BUI_Attackers", 1000, AttackersUpdate)
+end
+
+function BUI.Damage.Attackers_UI()	--UI init
+	local ch,ch1=BUI.Vars.FrameHealthColor,BUI.Vars.FrameHealthColor1
+	local w,h=BUI.Vars.AttackersWidth,BUI.Vars.AttackersHeight
+	local fs=math.min(BUI.Vars.RaidFontSize,h*.8)
+	local theme_color=BUI.Vars.Theme==6 and {1,204/255,248/255,1} or BUI.Vars.Theme==7 and BUI.Vars.AdvancedThemeColor or BUI.Vars.CustomEdgeColor
+	local function CrateHitAnimation(control)
+		local animation, timeline=CreateSimpleAnimation(ANIMATION_COLOR,control,0)
+		animation:SetColorValues(1,.8,.8,1,unpack(ch))
+		animation:SetDuration(750)
+		timeline:SetPlaybackType(ANIMATION_PLAYBACK_ONE_SHOT,1)
+		return timeline
+	end
+
+	local ui	=BUI.UI.Control(	"BUI_Attackers",				BanditsUI,	{w,h*3+8},		BUI.Vars.BUI_Attackers or {TOPLEFT,TOP,710/2,5,ZO_CompassFrame},	not (BUI.Vars.Attackers and BUI.inMenu))
+	ui.backdrop	=BUI.UI.Backdrop(	"BUI_Attackers_BG",			ui,		"inherit",		{CENTER,CENTER,0,0},	{0,0,0,0.4}, {0,0,0,1}, nil, true)
+	ui.label	=BUI.UI.Label(	"BUI_Attackers_Label",			ui.backdrop,	"inherit",	{CENTER,CENTER,0,0},	BUI.UI.Font("standard",20,true), nil, {1,1}, BUI.Loc("Attackers"))
+	ui:SetDrawTier(DT_HIGH)
+	ui:SetMovable(true)
+	ui:SetHandler("OnMouseUp", function(self) BUI.Menu:SaveAnchor(self) end)
+
+	local anchor	={TOPLEFT,TOPLEFT,0,0,ui}
+	for i=1, 10 do
+		ui[i]		=BUI.UI.Backdrop("BUI_Attackers"..i.."_Health",		ui,		{w,h},		anchor,			{0,0,0,1}, theme_color, nil, not (i==1 and BUI.inMenu)) ui[i]:SetDrawTier(0)
+		ui[i].bar	=BUI.UI.Statusbar("BUI_Attackers"..i.."_Bar",		ui[i],	{w-4,h-4},		{LEFT,LEFT,2,0},		ch, BUI.Textures[BUI.Vars.FramesTexture])
+--		ui[i].bar:SetGradientColors(ch[1],ch[2],ch[3],ch[4],ch1[1],ch1[2],ch1[3],ch1[4])
+		ui[i].name	=BUI.UI.Label(	"BUI_Attackers"..i.."_Name",		ui[i],	{w,h},		{LEFT,LEFT,8,0},		BUI.UI.Font(BUI.Vars.FrameFont1,fs,true), nil, {0,1}, 'Name')
+		ui[i].pct	=BUI.UI.Label(	"BUI_Attackers"..i.."_Pct",		ui[i],	{w,h},		{RIGHT,RIGHT,-8,0},	BUI.UI.Font(BUI.Vars.FrameFont2,fs,true), nil, {2,1}, 'Damage')
+		ui[i].hit	=CrateHitAnimation(ui[i].bar)
+		anchor={TOP,BOTTOM,0,4,ui[i]}
+	end
 end
 
 function BUI.Damage.New(result,abilityName,sourceName,sourceType,targetName,hitValue,powerType,damageType,sourceUnitId,targetUnitId,abilityId,isDamage)
@@ -253,9 +257,9 @@ function BUI.Damage.New(result,abilityName,sourceName,sourceType,targetName,hitV
 		--Flag timestamps
 --		if Outgoing then BUI.Damage.lastOut=now else BUI.Damage.lastIn=now end
 		--Split elements
-		if BUI.Vars.StatsSplitElements then if damageType~=2 and Multy_element[abilityName] then abilityName=abilityName.." ("..Element[damageType]..")" end
-		else if Multy_element[abilityName] then damageType=DAMAGE_TYPE_MAGIC end end
-		if AdditionalAbilityName[abilityId] then abilityName=abilityName..AdditionalAbilityName[abilityId] end
+		if BUI.Vars.StatsSplitElements then if damageType~=2 and BUI.Damage.Multy_element[abilityName] then abilityName=abilityName.." ("..BUI.Damage.Element[damageType]..")" end
+		else if BUI.Damage.Multy_element[abilityName] then damageType=DAMAGE_TYPE_MAGIC end end
+		if BUI.Damage.AdditionalAbilityName[abilityId] then abilityName=abilityName..BUI.Damage.AdditionalAbilityName[abilityId] end
 		--Statistics
 		BUI.Stats.RegisterDamage({
 			out		=Outgoing,
@@ -286,6 +290,6 @@ function BUI.Damage.Initialize()
 		48991,46340,48971,	--Force Shock
 		80526,			--Ilambris
 		}
-	for i=1, #attacks do Multy_element[GetAbilityName(attacks[i])]=true end
+	for i=1, #attacks do BUI.Damage.Multy_element[GetAbilityName(attacks[i])]=true end
 	BUI.Damage.Attackers_UI()
 end

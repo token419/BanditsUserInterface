@@ -40,9 +40,8 @@ local oakensoul={
 	[76617]="Minor Slayer",
 	[76618]="Minor Aegis",
 	[147417]="Minor Courage",
-	}	
-for id in pairs(buffFood) do Passives[id]=true end
-for id in pairs(VampireStage) do Passives[id]=true end
+	}
+
 local Active={
 	[93648]=true,--Fetcher Infection
 	}
@@ -183,7 +182,7 @@ local Synergy_Texture={
 [19]="/esoui/art/icons/ability_arcanist_004.dds",
 [20]="/esoui/art/icons/ability_arcanist_016_b.dds",
 }
-for id,i in pairs(Synergy_id) do BUI.SynergyTexture[id]=Synergy_Texture[i] end
+
 local prog_color,theme_color={.2,.5,.6,1}
 local source_color={
 	[1]={.9,.2,.2,.6},	--Negative
@@ -194,11 +193,21 @@ local PotionIcon={
 	magicka="/esoui/art/icons/consumable_potion_002_type_005.dds",
 	stamina="/esoui/art/icons/consumable_potion_003_type_005.dds"
 }
-BUI.SynergyCd={}
-BUI.Buffs	={
-	UpdateTime		=200,
-	Effects		={},
-	Defaults		={
+
+--	/script local _,progressionIndex=GetAbilityProgressionXPInfoFromAbilityId(40223) id=GetAbilityProgressionAbilityId(progressionIndex, 1, 4) d(GetAbilityName(id)..id)
+
+--Pets
+local CombatPet={
+--Familiars and Clannfears
+[23304]=true,[30631]=true,[30636]=true,[30641]=true,[23319]=true,[30647]=true,[30652]=true,[30657]=true,[23316]=true,[30664]=true,[30669]=true,[30674]=true,
+--Twilights
+[24613]=true,[30581]=true,[30584]=true,[30587]=true,[24636]=true,[30592]=true,[30595]=true,[30598]=true,[24639]=true,[30618]=true,[30622]=true,[30626]=true,
+--Bears
+[85982]=true,[85983]=true,[85984]=true,[85985]=true,[85986]=true,[85987]=true,[85988]=true,[85989]=true,[85990]=true,[85991]=true,[85992]=true,[85993]=true,
+}
+
+--Defaults
+local Defaults = {
 		PlayerBuffs		=true,
 		PlayerBuffSize	=44,
 		BuffsImportant	=true,
@@ -269,7 +278,19 @@ BUI.Buffs	={
 		[76667]=true,--Roar of Alkosh
 		[14890]=true,--Block
 		}
-	},
+}
+BUI:JoinTables(BUI.Defaults, Defaults)
+--BUI.Defaults.CustomBuffs=BUI.Buffs.Important
+
+for id in pairs(buffFood) do Passives[id]=true end
+for id in pairs(VampireStage) do Passives[id]=true end
+
+BUI.SynergyCd={}
+
+
+BUI.Buffs	={
+	UpdateTime		=200,
+	Effects		={},
 	HornAvailable={},
 	ColossusAvailable={},
 	BarrierAvailable={},
@@ -330,46 +351,23 @@ BUI.Buffs	={
 	[134599]=true,--Offbalance Immune
 	}
 }
---Defaults
-BUI:JoinTables(BUI.Defaults,BUI.Buffs.Defaults)
---BUI.Defaults.CustomBuffs=BUI.Buffs.Important
---	/script local _,progressionIndex=GetAbilityProgressionXPInfoFromAbilityId(40223) id=GetAbilityProgressionAbilityId(progressionIndex, 1, 4) d(GetAbilityName(id)..id)
-function BUI.GetFoodBuff()
-	for i=1, GetNumBuffs("player") do
-		local _,_,_,_,_,_,_,_,_,_,id=GetUnitBuffInfo("player",i)
-		if buffFood[id] and type(buffFood[id])=="table" then
-			return buffFood[id],id
-		end
-	end
-	return {}
-end
---Pets
-local CombatPet={
---Familiars and Clannfears
-[23304]=true,[30631]=true,[30636]=true,[30641]=true,[23319]=true,[30647]=true,[30652]=true,[30657]=true,[23316]=true,[30664]=true,[30669]=true,[30674]=true,
---Twilights
-[24613]=true,[30581]=true,[30584]=true,[30587]=true,[24636]=true,[30592]=true,[30595]=true,[30598]=true,[24639]=true,[30618]=true,[30622]=true,[30626]=true,
---Bears
-[85982]=true,[85983]=true,[85984]=true,[85985]=true,[85986]=true,[85987]=true,[85988]=true,[85989]=true,[85990]=true,[85991]=true,[85992]=true,[85993]=true,
-}
-function BUI.DismissPets()
-	for i=1, GetNumBuffs("player") do
-		local _,_,_,buffSlot,_,_,_,_,_,_,abilityId=GetUnitBuffInfo("player",i)
-		if CombatPet[abilityId] then CancelBuff(buffSlot) end
-	end
-end
+
+-- Create BUI.Buffs.SynergyTexture
+BUI.Buffs.SynergyTexture = {}
+for id,i in pairs(Synergy_id) do BUI.Buffs.SynergyTexture[id]=Synergy_Texture[i] end
+
 
 local function OakensoulEquipped()
-	if GetItemLinkItemId(GetItemLink(BAG_WORN, 11))==187658 or 
+	if GetItemLinkItemId(GetItemLink(BAG_WORN, 11))==187658 or
 	   GetItemLinkItemId(GetItemLink(BAG_WORN, 12))==187658 then return true end
 	return false
 end
 
 local function IsOakensoul(buffId)
-	if OakensoulEquipped() then 
+	if OakensoulEquipped() then
 		for id in pairs(oakensoul) do
 			if buffId==id then return true end
-		end		
+		end
 	end
 	return false
 end
@@ -417,321 +415,6 @@ local function OnAbilitySlotted()
 			end
 			UpdateCooldown=false
 		end)
-	end
-end
-
-function BUI.Frames.PlayerBuffs_Init()
-	if BUI_BuffsP_Panel then BUI_BuffsP_Panel:SetHidden(true) end
-	if not BUI.Vars.PlayerBuffs then return end
-	local number	=16
-	local fs		=BUI.Vars.PlayerBuffSize/2.5	--16
-	local border	=4
-	local space		=3
-	local size		=BUI.Vars.PlayerBuffSize
-	--Create the Self Buffs frame container
-	local ui		=BUI.UI.Control(	"BUI_BuffsP",			BanditsUI,	{(size+space)*number-space,size},	BUI.Vars.BUI_BuffsP,		false)
-	ui.backdrop		=BUI.UI.Backdrop(	"BUI_BuffsP_BG",			ui,		"inherit",					{CENTER,CENTER,0,0},		{0,0,0,0.4}, {0,0,0,1}, nil, true) --ui.backdrop:SetEdgeTexture("",16,4,4)
-	ui.label		=BUI.UI.Label(	"BUI_BuffsP_Label",		ui.backdrop,	"inherit",				{CENTER,CENTER,0,0},		BUI.UI.Font("standard",20,true), nil, {1,1}, BUI.Loc("PBuffsLabel"))
-	ui:SetAlpha(BUI.Vars.FrameOpacityOut/100)
-	ui:SetDrawLayer(DT_HIGH)
-	ui:SetMovable(true)
-	ui:SetHandler("OnMouseUp", function(self) BUI.Menu:SaveAnchor(self) end)
-	ui.base		=BUI.UI.Control(	"BUI_BuffsP_Panel",		ui,		{size,size},				{BUI.Vars.PlayerBuffsAlign,BUI.Vars.PlayerBuffsAlign,0,0},		false)
-	local anchor	={LEFT,LEFT,0,0,ui.base}
-	--Iterate over Buffs
-	for i=1, number do
-	local ability	=BUI.UI.Backdrop(	"BUI_BuffsP"..i,			ui.base,	{size,size},				anchor,				theme_color, theme_color, BUI.abilityframe, true)
-	ability:SetDrawLayer(0) ability:SetEdgeTexture("",8,4,4)
---	local ability	=BUI.UI.Statusbar("BUI_BuffsP"..i,			ui.base,	{size,size},				anchor,				{1,1,1,1},texture, false)
-	ability.icon	=BUI.UI.Statusbar("BUI_BuffsP"..i.."_Icon",	ability,	{size-border,size-border},		{CENTER,CENTER,0,0},		{1,1,1,1},'', false)
-	ability.icon:SetDrawLayer(0)
-	ability.label	=BUI.UI.Label(	"BUI_BuffsP"..i.."_Label",	ability,	{size,size},				{TOP,TOP,0,0},			BUI.UI.Font(BUI.Vars.FrameFont1,fs-2,true), nil, {1,2}, '', false)
-	ability.label:SetDrawLayer(1)
-	ability.timer	=BUI.UI.Label(	"BUI_BuffsP"..i.."_Timer",	ability,	{fs*4,fs},					{BOTTOM,BOTTOM,0,-5},		BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {1,2}, '', false)
-	ability.timer:SetDrawLayer(1)
-	ability.count	=BUI.UI.Label(	"BUI_BuffsP"..i.."_Count",	ability,	{fs*2,fs},					{TOPRIGHT,TOPRIGHT,0,0},	BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {2,2}, '', false)
-	ability.count:SetDrawLayer(2)
-	--Extra settings
-	ability.index=i
-	ability:SetMouseEnabled(true)
-	ability:SetHandler("OnMouseDown", function(self,button) BUI.Buffs.ButtonHandler(self,button) end)
-	ability:SetHandler("OnMouseEnter", BUI.Buffs.ShowTooltip)
-	ability:SetHandler("OnMouseExit", function()ClearTooltip(InformationTooltip)end)
-	anchor={LEFT,RIGHT,space,0,ability}
-	end
-end
-function BUI.Frames.CustomBuffs_Init()
-	local number	=12
-	for i=1, number do control=_G["BUI_BuffsC"..i] if control~=nil then control:SetHidden(true) end end
-	if not BUI.Vars.EnableCustomBuffs then return end
-	local fs		=BUI.Vars.CustomBuffSize/2.5	--16
-	local border	=4
-	local space		=3
-	local w		=BUI.Vars.CustomBuffsPWidth
-	local size		=BUI.Vars.CustomBuffSize
-	local ph		=size<=36 and 8 or math.floor(size/4)
-	local dimensions	=BUI.Vars.CustomBuffsDirection=="horisontal" and {(size+space)*number-space,size} or {size+space+w,(size+space)*number-space}
-	local side		=BUI.Vars.CustomBuffsPSide=="right"
-	--Create the Self Buffs frame container
-	local ui	=BUI.UI.Control(	"BUI_BuffsC",			BanditsUI,	dimensions,				BUI.Vars.BUI_BuffsC,		false)
-	ui.backdrop	=BUI.UI.Backdrop(	"BUI_BuffsC_BG",			ui,	"inherit",				{CENTER,CENTER,0,0},		{0,0,0,0.4}, {0,0,0,1}, nil, true) --ui.backdrop:SetEdgeTexture("",16,4,4)
-	ui.label	=BUI.UI.Label(	"BUI_BuffsC_Label",		ui.backdrop,	"inherit",				{CENTER,CENTER,0,0},		BUI.UI.Font("standard",20,true), nil, {1,1}, BUI.Loc("CBuffsLabel"))
-	ui:SetAlpha(BUI.Vars.FrameOpacityOut/100)
-	ui:SetDrawLayer(DT_HIGH)
-	ui:SetMovable(true)
-	ui:SetHandler("OnMouseUp", function(self) BUI.Menu:SaveAnchor(self) end)
-	ui.base		=BUI.UI.Control("BUI_BuffsC_Base",		ui,	dimensions,	{TOPLEFT,TOPLEFT,0,0})
-	--Iterate over Buffs
-	local anchor	={BOTTOMLEFT,BOTTOMLEFT,0,0,ui.base}
-	local bar_texture=side and "/BanditsUserInterface/textures/theme/progressbar_right_2.dds" or "/BanditsUserInterface/textures/theme/progressbar_left_2.dds"
-	for i=1, number do
-	local ability	=BUI.UI.Control(	"BUI_BuffsC"..i,			ui.base,	{size,size},			anchor,				true)
-	ability.bg		=BUI.UI.Backdrop(	"BUI_BuffsC"..i.."_BG",		ability,	{size,size},			{CENTER,CENTER,0,0},		theme_color, theme_color, BUI.abilityframe, false)
-	ability.bg:SetDrawLayer(0) ability.bg:SetEdgeTexture("",8,4,4)
-	ability.icon	=BUI.UI.Statusbar("BUI_BuffsC"..i.."_Icon",	ability.bg,	{size-border,size-border},	{CENTER,CENTER,0,0},		{1,1,1,1},'', false)
-	ability.icon:SetDrawLayer(0)
-	ability.label	=BUI.UI.Label(	"BUI_BuffsC"..i.."_Label",	ability,	{size,size},			{TOPLEFT,TOPLEFT,0,0},		BUI.UI.Font(BUI.Vars.FrameFont1,fs-2,true), nil, {1,2}, '', false)
-	ability.label:SetDrawLayer(1)
-	ability.timer	=BUI.UI.Label(	"BUI_BuffsC"..i.."_Timer",	ability,	{fs*4,fs},				{BOTTOM,BOTTOM,0,-5},		BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {1,2}, '', false)
-	ability.timer:SetDrawLayer(1)
-	ability.count	=BUI.UI.Label(	"BUI_BuffsC"..i.."_Count",	ability,	{fs*2,fs},				{TOPRIGHT,TOPRIGHT,0,0},	BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {2,2}, '', false)
-	ability.count:SetDrawLayer(2)
-	anchor=side and {LEFT,RIGHT,space,0} or {RIGHT,LEFT,-space,0}
-	ability.progress	=BUI.UI.Backdrop("BUI_BuffsC"..i.."_Progress",	ability,	{w,ph},				anchor,	{0,0,0,0}, {1,1,1,1}, nil, (not BUI.Vars.CustomBuffsProgress or BUI.Vars.CustomBuffsDirection=="horisontal"))
-	ability.progress:SetEdgeTexture(bar_texture,32,4,4) ability.progress:SetEdgeColor(unpack(theme_color))
-	if ph>8 then
-		ability.pbg	=BUI.UI.Backdrop("BUI_BuffsC"..i.."_pBg",		ability.progress,	{w-4,ph-4},			{TOPLEFT,TOPLEFT,2,2},	{0,0,0,1}, {0,0,0,0}, nil, false)
-	else
-		if ability.pbg then ability.pbg:SetHidden(true) end
-	end
-	ability.name	=BUI.UI.Label(	"BUI_BuffsC"..i.."_Name",	ability.progress,	{w,fs-2},			{BOTTOMLEFT,TOPLEFT,0,-space},	BUI.UI.Font("standard",fs-2,true), nil, {side and 0 or 2,2}, '', false)
-	anchor=side and {LEFT,LEFT,2,0} or {RIGHT,RIGHT,-2,0}
-	ability.bar		=BUI.UI.Statusbar("BUI_BuffsC"..i.."_Bar",	ability.progress,	{w-4,ph-4},			anchor,	prog_color, BUI.Textures[BUI.Vars.FramesTexture], false)
-	--Extra settings
-	ability.index=i
-	ability.custom=true
-	ability:SetMouseEnabled(true)
-	ability:SetHandler("OnMouseDown", function(self,button) BUI.Buffs.ButtonHandler(self,button) end)
-	ability:SetHandler("OnMouseEnter", BUI.Buffs.ShowTooltip)
-	ability:SetHandler("OnMouseExit", function()ClearTooltip(InformationTooltip)end)
-	anchor=BUI.Vars.CustomBuffsDirection=="horisontal" and {LEFT,RIGHT,space,0,ability} or {BOTTOM,TOP,0,-space,ability}
-	end
-end
-function BUI.Frames.SynergyCd_Init()
-	local number	=4
-	for i=1, number do control=_G["BUI_BuffsS"..i] if control~=nil then control:SetHidden(true) end end
-	if not BUI.Vars.EnableSynergyCd then return end
-	local fs		=BUI.Vars.SynergyCdSize/2.5	--16
-	local border	=6
-	local space		=3
-	local w		=BUI.Vars.SynergyCdPWidth
-	local size		=BUI.Vars.SynergyCdSize
-	local dimensions	=BUI.Vars.SynergyCdDirection=="horisontal" and {(size+space)*number-space,size} or {size+space+w,(size+space)*number-space}
-	local side		=BUI.Vars.SynergyCdPSide=="right"
-	--Create the Self Buffs frame container
-	local ui	=BUI.UI.Control(	"BUI_BuffsS",			BanditsUI,	dimensions,				BUI.Vars.BUI_BuffsS,		false)
-	ui.backdrop	=BUI.UI.Backdrop(	"BUI_BuffsS_BG",			ui,	"inherit",				{CENTER,CENTER,0,0},		{0,0,0,0.4}, {0,0,0,1}, nil, true) --ui.backdrop:SetEdgeTexture("",16,4,4)
-	ui.label	=BUI.UI.Label(	"BUI_BuffsS_Label",		ui.backdrop,	"inherit",				{CENTER,CENTER,0,0},		BUI.UI.Font("standard",20,true), nil, {1,1}, BUI.Loc("SBuffsLabel"))
-	ui:SetAlpha(BUI.Vars.FrameOpacityOut/100)
-	ui:SetDrawLayer(DT_HIGH)
-	ui:SetMovable(true)
-	ui:SetHandler("OnMouseUp", function(self) BUI.Menu:SaveAnchor(self) end)
-	ui.base		=BUI.UI.Control("BUI_BuffsS_Base",		ui,	dimensions,	{TOPLEFT,TOPLEFT,0,0})
-	--Iterate over Buffs
-	local anchor	={BOTTOMLEFT,BOTTOMLEFT,0,0,ui.base}
-	local bar_texture=side and "/BanditsUserInterface/textures/theme/progressbar_right_2.dds" or "/BanditsUserInterface/textures/theme/progressbar_left_2.dds"
-	for i=1, number do
-	local ability	=BUI.UI.Control(	"BUI_BuffsS"..i,			ui.base,	{size,size},			anchor,				true)
-	ability.bg		=BUI.UI.Backdrop(	"BUI_BuffsS"..i.."_BG",		ability,	{size,size},			{CENTER,CENTER,0,0},		{0,0,0,0}, theme_color, nil, false)
-	ability.bg:SetDrawLayer(0) ability.bg:SetEdgeTexture("",8,2,4)
-	ability.icon	=BUI.UI.Statusbar("BUI_BuffsS"..i.."_Icon",	ability.bg,	{size-border,size-border},	{CENTER,CENTER,0,0},		{1,1,1,1},'', false)
-	ability.icon:SetDrawLayer(0)
---	ability.label	=BUI.UI.Label(	"BUI_BuffsS"..i.."_Label",	ability,	{size,size},			{TOPLEFT,TOPLEFT,0,0},		BUI.UI.Font(BUI.Vars.FrameFont1,fs-2,true), nil, {1,2}, '', false)
---	ability.label:SetDrawLayer(1)
-	ability.timer	=BUI.UI.Label(	"BUI_BuffsS"..i.."_Timer",	ability,	{fs*4,fs},				{BOTTOM,BOTTOM,0,-5},		BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {1,2}, '', false)
-	ability.timer:SetDrawLayer(1)
-	anchor=side and {LEFT,RIGHT,space,0} or {RIGHT,LEFT,-space,0}
-	ability.progress	=BUI.UI.Backdrop("BUI_BuffsS"..i.."_Progress",	ability,	{w,8},				anchor,	{0,0,0,0}, {1,1,1,1}, nil, not BUI.Vars.SynergyCdProgress)
-	ability.progress:SetEdgeTexture(bar_texture,32,4,4) ability.progress:SetEdgeColor(unpack(theme_color))
-	ability.progress:SetAlpha(.8)
-	ability.name	=BUI.UI.Label(	"BUI_BuffsS"..i.."_Name",	ability.progress,	{w,fs-2},		{BOTTOMLEFT,TOPLEFT,0,-space},	BUI.UI.Font("standard",fs-2,true), nil, {side and 0 or 2,2}, '', false)
-	anchor=side and {LEFT,LEFT,2,0} or {RIGHT,RIGHT,-2,0}
-	ability.bar		=BUI.UI.Statusbar("BUI_BuffsS"..i.."_Bar",	ability.progress,	{w-2,8-4},		anchor,	prog_color, BUI.Textures[BUI.Vars.FramesTexture], false)
-	--Extra settings
-	ability.index=i
-	ability.custom=true
-	ability:SetMouseEnabled(true)
-	ability:SetHandler("OnMouseEnter", BUI.Buffs.ShowTooltip)
-	ability:SetHandler("OnMouseExit", function()ClearTooltip(InformationTooltip)end)
-	anchor=BUI.Vars.SynergyCdDirection=="horisontal" and {LEFT,RIGHT,space,0,ability} or {BOTTOM,TOP,0,-space,ability}
-	end
-end
-function BUI.Frames.Widgets_Init(widget,dup)
-	local cm		=BUI.Vars.FrameMagickaColor
-	local fs		=BUI.Vars.WidgetsSize/2.5	--16
-	local border	=4
-	local space		=3
-	local w		=BUI.Vars.WidgetsPWidth
-	local size		=BUI.Vars.WidgetsSize
-	local ph		=size<=36 and 8 or math.floor(size/4)
-	local anchor	={CENTER,CENTER,400,350}
-	local widgets
-	if widget then
-		widgets={[string.gsub(widget,"BUI_Widget_","")]=true}
-	else
-		widgets=BUI.Vars.Widgets
-		widgets["Potion"]=BUI.Vars.WidgetPotion
-	end
-	for _id,enable in pairs(widgets) do
-	if enable then
-	local icon,name,side
-	local id=string.gsub(_id," ","_")
-	local data=BUI.Vars["BUI_Widget_"..id]
-	if data then anchor=data or anchor side=anchor[6] else data={} end
-	if data[11]~=true then
-	anchor=dup and {TOP,BOTTOM,0,space+(size+space)*(dup-1),_G["BUI_Widget_"..id]} or anchor
-	local bar_texture=side and "/BanditsUserInterface/textures/theme/progressbar_left_2.dds" or "/BanditsUserInterface/textures/theme/progressbar_right_2.dds"
-	local fname		="BUI_Widget_"..id..(dup and "_"..dup or "")
-	local ability	=BUI.UI.Control(	fname,	BanditsUI,	{size,size},	anchor,	not widget and not data[12])
-	local id_check=tonumber(id)
-	if id_check then
-		icon=GetAbilityIcon(id_check)
-		name=GetAbilityName(id_check)
-		ability.duration=BUI.GetAbilityDuration(id_check)
-	else
-		icon=_id=="Potion" and PotionIcon[BUI.MainPower] or "/esoui/art/icons/icon_missing.dds"
-		name=_id
-	end
-	ability.init=false
-	ability.bg		=BUI.UI.Backdrop(	fname.."_BG",	ability,	{size,size},			{CENTER,CENTER,0,0},		theme_color, theme_color, BUI.abilityframe, false)
-	ability.bg:SetDrawLayer(0) ability.bg:SetEdgeTexture("",8,4,4)
-	ability.icon	=BUI.UI.Statusbar(fname.."_Icon",	ability.bg,	{size-border,size-border},	{CENTER,CENTER,0,0},		{1,1,1,1}, icon, false)
-	ability.icon:SetDrawLayer(0)
---[[
-	if BUI.Vars.DeveloperMode then
-	ability.label	=BUI.UI.Label(	fname.."_Label",	ability,	{size,size},			{TOPLEFT,TOPLEFT,0,0},		BUI.UI.Font(BUI.Vars.FrameFont1,fs-2,true), nil, {1,0}, id_check or '', false)
-	ability.label:SetDrawLayer(1)
-	end
---]]
-	ability.timer	=BUI.UI.Label(	fname.."_Timer",	ability,	{fs*4,fs},				{BOTTOM,BOTTOM,0,-5},		BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {1,2}, '', false)
-	ability.timer:SetDrawLayer(1)
-	ability.count	=BUI.UI.Label(	fname.."_Count",	ability,	{size,size},			{TOP,TOP,0,0},			BUI.UI.Font(BUI.Vars.FrameFont1,size/2,true,true), nil, {2,0}, '', false)
-	ability.count:SetDrawLayer(2)
-	anchor=side and {RIGHT,LEFT,-space,0} or {LEFT,RIGHT,space,0}
-	ability.progress	=BUI.UI.Backdrop(fname.."_Progress",	ability,	{w,ph},			anchor,	{0,0,0,0}, {1,1,1,1}, nil, true)	--not data[8])
-	ability.progress:SetEdgeTexture(bar_texture,32,4,4) ability.progress:SetEdgeColor(unpack(theme_color))
-	if ph>8 then
-		ability.pbg	=BUI.UI.Backdrop(fname.."_pBg",	ability.progress,	{w-4,ph-4},			{TOPLEFT,TOPLEFT,2,2},	{0,0,0,1}, {0,0,0,0}, nil, false)
-	else
-		local frame=_G[fname.."_pBg"] if frame then frame:SetHidden(true) end
-	end
---	ability.progress:SetAlpha(.8)
-	anchor=side and {BOTTOMRIGHT,TOPRIGHT,0,-space} or {BOTTOMLEFT,TOPLEFT,0,-space}
-	ability.name	=BUI.UI.Label(	fname.."_Name",	ability.progress,	{w,fs-2},			anchor,	BUI.UI.Font("standard",fs-2,true), nil, {(side and 2 or 0),0}, name, false)
-	anchor=side and {TOPRIGHT,BOTTOMRIGHT,0,-space} or {TOPLEFT,BOTTOMLEFT,0,-space}
---	ability.tName	=BUI.UI.Label(	fname.."_Target",	ability.progress,	{w,fs-2},			anchor,	BUI.UI.Font("standard",fs-2,true), nil, {(side and 2 or 0),0}, "", false)
-	anchor=side and {RIGHT,RIGHT,-2,0} or {LEFT,LEFT,2,0}
-	ability.bar		=BUI.UI.Statusbar(fname.."_Bar",	ability.progress,	{w-4,ph-4},			anchor,	prog_color, BUI.Textures[BUI.Vars.FramesTexture], false)
-	ability.bar1	=BUI.UI.Statusbar(fname.."_Bar1",	ability.progress,	{w-4,ph-4},			anchor,	cm, BUI.Textures[BUI.Vars.FramesTexture], true)
-	ability.bar1:SetAlpha(.75)
-	--Extra settings
-	ability.index=_id
-	ability.widget=true
-	if dup then return ability end
-	ability:SetMouseEnabled(true)
-	ability:SetHandler("OnMouseDown", function(self,button) BUI.Buffs.ButtonHandler(self,button) end)
-	ability:SetHandler("OnMoveStop", function(self) BUI.Menu:SaveAnchor(self,nil,nil,nil,side,data[7],data[8],data[9],data[10],data[11],data[12],data[13]) end)
-	ability:SetHandler("OnMouseEnter", BUI.Buffs.ShowTooltip)
-	ability:SetHandler("OnMouseExit", function()ClearTooltip(InformationTooltip)end)
---	ability:SetDrawTier(DT_HIGH)
-	anchor={BOTTOM,TOP,0,-space,ability}
-	end
-	end
-	end
-end
-function BUI.Frames.PassiveBuffs_Init()
-	local number	=16
-	for i=1, number do control=_G["BUI_BuffsPas"..i] if control~=nil then control:SetHidden(true) end end
-	if not BUI.Vars.PlayerBuffs or BUI.Vars.BuffsPassives~="On additional panel" then return end
-	local fs		=BUI.Vars.PassiveBuffSize/2.5	--16
-	local border	=4
-	local space		=3
-	local w		=BUI.Vars.PassivePWidth
-	local size		=BUI.Vars.PassiveBuffSize
-	local side		=BUI.Vars.PassivePSide=="right"
-	--Create the Self Buffs frame container
-	local ui	=BUI.UI.Control(	"BUI_BuffsPas",			BanditsUI,	{size,(size+space)*number-space},	BUI.Vars.BUI_BuffsPas,		false)
-	ui.backdrop	=BUI.UI.Backdrop(	"BUI_BuffsPas_BG",		ui,	"inherit",					{BOTTOM,BOTTOM,0,0},		{0,0,0,0.4}, {0,0,0,1}, nil, true) --ui.backdrop:SetEdgeTexture("",16,4,4)
-	ui.label	=BUI.UI.Label(	"BUI_BuffsPas_Label",		ui.backdrop,	"inherit",					{CENTER,CENTER,0,0},		BUI.UI.Font("standard",20,true), nil, {1,1}, BUI.Loc("PasBuffsLabel"))
-	ui:SetAlpha(BUI.Vars.FrameOpacityOut/100)
-	ui:SetDrawLayer(DT_HIGH)
-	ui:SetMovable(true)
-	ui:SetHandler("OnMouseUp", function(self) BUI.Menu:SaveAnchor(self) end)
-	ui.base		=BUI.UI.Control("BUI_BuffsPas_Base",		ui,	"inherit",	{BOTTOMLEFT,BOTTOMLEFT,0,0})
-	--Iterate over Buffs
-	local anchor	={BOTTOM,BOTTOM,0,0,ui.base}
-	local bar_texture	=side and "/BanditsUserInterface/textures/theme/progressbar_right_2.dds" or "/BanditsUserInterface/textures/theme/progressbar_left_2.dds"
-	for i=1, number do
-	local color={.4,.4,.4,.6}
-	local ability	=BUI.UI.Backdrop(	"BUI_BuffsPas"..i,		ui.base,	{size,size},			anchor,				theme_color, color, BUI.abilityframe, true)
-	ability:SetDrawLayer(0) ability:SetEdgeTexture("",8,4,4)
-	ability.icon	=BUI.UI.Statusbar("BUI_BuffsPas"..i.."_Icon",	ability,	{size-border,size-border},	{CENTER,CENTER,0,0},		{1,1,1,1},'', false)
-	ability.icon:SetDrawLayer(0)
-	ability.label	=BUI.UI.Label(	"BUI_BuffsPas"..i.."_Label",	ability,	{size,size},			{TOPLEFT,TOPLEFT,0,0},		BUI.UI.Font(BUI.Vars.FrameFont1,fs-2,true), nil, {1,2}, '', false)
-	ability.label:SetDrawLayer(1)
-	ability.timer	=BUI.UI.Label(	"BUI_BuffsPas"..i.."_Timer",	ability,	{fs*4,fs},				{BOTTOM,BOTTOM,0,-5},		BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {1,2}, '', false)
-	ability.timer:SetDrawLayer(1)
-	ability.count	=BUI.UI.Label(	"BUI_BuffsPas"..i.."_Count",	ability,	{fs*2,fs},				{TOPRIGHT,TOPRIGHT,0,0},	BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {2,2}, '', false)
-	ability.count:SetDrawLayer(2)
-	anchor=side and {LEFT,RIGHT,space,0} or {RIGHT,LEFT,-space,0}
-	ability.progress	=BUI.UI.Backdrop(	"BUI_BuffsPas"..i.."_Progress",	ability,	{w,8},			anchor,	{0,0,0,0}, {1,1,1,1}, nil, not BUI.Vars.PassiveProgress)
-	ability.progress:SetEdgeTexture(bar_texture,32,4,4) ability.progress:SetEdgeColor(unpack(theme_color))
-	ability.name	=BUI.UI.Label(	"BUI_BuffsPas"..i.."_Name",	ability.progress,	{w,fs-2},			{BOTTOMRIGHT,TOPRIGHT,0,-space},	BUI.UI.Font("standard",fs-2,true), nil, {side and 0 or 2,2}, '', false)
-	anchor=side and {LEFT,LEFT,2,0} or {RIGHT,RIGHT,-2,0}
-	ability.bar		=BUI.UI.Statusbar("BUI_BuffsPas"..i.."_Bar",	ability.progress,	{w-4,8-4},			anchor,	prog_color, BUI.Textures[BUI.Vars.FramesTexture], false)	
-	--Extra settings
-	ability.index=i
-	ability.passives=true
-	ability:SetMouseEnabled(true)
-	ability:SetHandler("OnMouseDown", function(self,button) BUI.Buffs.ButtonHandler(self,button) end)
-	ability:SetHandler("OnMouseEnter", BUI.Buffs.ShowTooltip)
-	ability:SetHandler("OnMouseExit", function()ClearTooltip(InformationTooltip)end)
-	anchor={BOTTOM,TOP,0,-space,ability}
-	end
-end
-function BUI.Frames.TargetBuffs_Init()
-	if BUI_BuffsT_Panel then BUI_BuffsT_Panel:SetHidden(true) end
-	if not BUI.Vars.TargetBuffs then return end
-	local fs		=BUI.Vars.TargetBuffSize/2.5	--16
-	local k		=1.16
-	local space		=3
-	local size		=BUI.Vars.TargetBuffSize
-	local number	=15
-	--Create the target buffs frame container
-	local ui		=BUI.UI.Control(	"BUI_BuffsT",			BanditsUI,	{(size+space)*number-space,size},	BUI.Vars.BUI_BuffsT,		false)
-	ui.backdrop	=BUI.UI.Backdrop(	"BUI_BuffsT_BG",				ui,	"inherit",					{CENTER,CENTER,0,0},		{0,0,0,0.4}, {0,0,0,1}, nil, true) --ui.backdrop:SetEdgeTexture("",16,4,4)
-	ui.label		=BUI.UI.Label(	"BUI_BuffsT_Label",		ui.backdrop,	"inherit",			{CENTER,CENTER,0,0},		BUI.UI.Font("standard",20,true), nil, {1,1}, BUI.Loc("TBuffsLabel"))
-	ui:SetAlpha(BUI.Vars.FrameOpacityOut/100)
-	ui:SetDrawLayer(DT_HIGH)
-	ui:SetMovable(true)
-	ui:SetHandler("OnMouseUp", function(self) BUI.Menu:SaveAnchor(self) end)
-	ui.base		=BUI.UI.Control(	"BUI_BuffsT_Panel",		ui,	{size,size},				{BUI.Vars.TargetBuffsAlign,BUI.Vars.TargetBuffsAlign,0,0})
-	local anchor	={LEFT,LEFT,0,0,ui.base}
-	--Iterate over Buffs
-	for i=1, number do
-	local ability	=BUI.UI.Backdrop(	"BUI_BuffsT"..i,			ui.base,	{size,size},			anchor,				theme_color, theme_color, BUI.abilityframe, true)
---	ability.debuff	=BUI.UI.Statusbar("BUI_BuffsT"..i.."_Debuff",	ability,	{size,size/2},			{BOTTOM,TOP,0,0},			{1,1,1,1},'/BanditsUserInterface/textures/debuff.dds', true)
-	ability:SetDrawLayer(0) ability:SetEdgeTexture("",8,2,4)
-	ability.icon	=BUI.UI.Statusbar("BUI_BuffsT"..i.."_Icon",	ability,	{size/k,size/k},			{CENTER,CENTER,0,0},		{1,1,1,1},'', false)
-	ability.icon:SetDrawLayer(1)
-	ability.label	=BUI.UI.Label(	"BUI_BuffsT"..i.."_Label",	ability,	{size,size},			{TOP,TOP,0,0},			BUI.UI.Font(BUI.Vars.FrameFont1,fs-2,true), nil, {1,2}, '', false)
-	ability.label:SetDrawLayer(2)
-	ability.timer	=BUI.UI.Label(	"BUI_BuffsT"..i.."_Timer",	ability,	{fs*4,fs},				{BOTTOM,BOTTOM,0,-5},		BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {1,2}, '', false)
-	ability.timer:SetDrawLayer(2)
-	ability.count	=BUI.UI.Label(	"BUI_BuffsT"..i.."_Count",	ability,	{fs*2,fs},				{TOPRIGHT,TOPRIGHT,0,0},	BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {2,2}, '', false)
-	ability.count:SetDrawLayer(2)
-	--Extra settings
-	anchor={LEFT,RIGHT,space,0,ability}
 	end
 end
 
@@ -786,6 +469,7 @@ local function PlayerBuffs_Update()
 		BUI_BuffsPas_Base:SetHeight((BUI.Vars.PassiveBuffSize+space)*number-space)
 	end
 end
+
 local function Widgets_Update()
 	local now=GetGameTimeMilliseconds()
 	--Potion
@@ -886,6 +570,7 @@ local function Widgets_Update()
 		end
 	end
 end
+
 local function CustomBuffs_Update()
 	--Custom Buffs
 	number=#BUI.CustomBuffs
@@ -910,6 +595,7 @@ local function CustomBuffs_Update()
 	end
 	for i=math.min(number+1,12), 12 do _G["BUI_BuffsC"..i]:SetHidden(true) end
 end
+
 local function SynergyCd_Update()
 	--Custom Buffs
 	local now=GetGameTimeMilliseconds()
@@ -935,6 +621,7 @@ local function SynergyCd_Update()
 		end
 	end
 end
+
 local function TargetBuffs_Update()
 	local k		=1.16
 	local space		=5
@@ -1147,19 +834,19 @@ local function BuffsPlayer()		--PlayerBuffs
 				filter 		=1,
 				Scale 		=1,
 				Positive	=true,
-				Player	=true,		
+				Player	=true,
 			}
 		if (BUI.Vars.BuffsPassives=="On additional panel") then
 			local filteredPassives={}
 			--remove passives provided by oakensoul
 			for id,value in pairs(BUI.PassiveBuffs) do
 				if not IsOakensoul(BUI.PassiveBuffs[id].id) then table.insert(filteredPassives,BUI.PassiveBuffs[id]) end
-			end			
+			end
 			--add fake oakensoul entry
 			table.insert(filteredPassives,oakbuff)
 			BUI.PassiveBuffs=filteredPassives
 		elseif (BUI.Vars.BuffsPassives=="On one panel") then
-			local filteredBuffs={}			
+			local filteredBuffs={}
 			--remove passives provided by oakensoul
 			for id,value in pairs(BUI.PlayerBuffs) do
 				if not IsOakensoul(BUI.PlayerBuffs[id].id) then table.insert(filteredBuffs,BUI.PlayerBuffs[id]) end
@@ -1167,7 +854,7 @@ local function BuffsPlayer()		--PlayerBuffs
 			--add fake oakensoul entry
 			table.insert(filteredBuffs,oakbuff)
 			BUI.PlayerBuffs=filteredBuffs
-		end		
+		end
 	end
 	--Sort
 	if BUI.Vars.PlayerBuffs then
@@ -1200,6 +887,7 @@ local function BuffsPlayer()		--PlayerBuffs
 		CALLBACK_MANAGER:FireCallbacks("BUI_Food",true)
 	end
 end
+
 local function BuffsTarget()		--TargetBuffs
 	BUI.TargetBuffs={}
 	local TauntTimer,CrusherTimer=0,0
@@ -1358,6 +1046,7 @@ local function BuffsTarget()		--TargetBuffs
 	if BUI.Vars.CrusherTimer then BUI.Reticle.CrusherTimer(CrusherTimer) end
 	end
 end
+
 local function TimersUpdate()
 	if BUI.Vars.PlayerBuffs or BUI.Vars.EnableCustomBuffs or BUI.Vars.EnableWidgets or (BUI.Vars.EnableStats and BUI.Vars.StatsBuffs) then BuffsPlayer() end
 	if BUI.Vars.TargetBuffs or BUI.Vars.StatsBuffs or BUI.Vars.EnableWidgets or (BUI.Vars.EnableStats and BUI.Vars.StatsBuffs) then BuffsTarget() end
@@ -1369,26 +1058,6 @@ local function TimersUpdate()
 		if BUI.Vars.EnableCustomBuffs then CustomBuffs_Update() end
 		if BUI.Vars.EnableSynergyCd then SynergyCd_Update() end
 	end
-end
-
-function BUI.Buffs.ShowTooltip(control)
-	local data=control.passives and BUI.PassiveBuffs[control.index] or (control.custom and BUI.CustomBuffs[control.index] or (control.widget and BUI.Widgets[control.index] or BUI.PlayerBuffs[control.index]))
-	if not data or data.Blank then return end
-	if data.Target then for name in pairs(data) do if name~="Target" then data=data[name] break end end end
-	InitializeTooltip(InformationTooltip, control, BOTTOM, 0, -16)
-	InformationTooltip:AddLine(zo_strformat("<<C:1>>",data.Name),'$(BOLD_FONT)'..'|22',1,1,1)
-	local desc=type(data.id)=="number" and GetAbilityDescription(data.id) or ""
-	local text=	'|t300:8:/EsoUI/Art/Miscellaneous/horizontalDivider.dds|t\n'
-		..	'ID: |cFFFFFF'..data.id..'|r\n'
-		..	'Duration: |cFFFFFF'..(data.Duration and math.floor(data.Duration) or GetAbilityDuration(data.id)/1000)..' seconds|r\n'
-		..	'Type: |cFFFFFF'..(data.Positive and "Buff" or "Debuff")..'|r\n'
-		..	(data.Player and 'Cast by: |cFFFFFFPlayer|r\n' or '')
-		..	'|t300:8:/EsoUI/Art/Miscellaneous/horizontalDivider.dds|t\n'
-		..	(desc~='' and desc..'\n|t300:8:/EsoUI/Art/Miscellaneous/horizontalDivider.dds|t\n' or '')
-		..	((not control.custom and not control.widget) and '|t16:16:/BanditsUserInterface/textures/lmb.dds|t'	.." Add to custom " or "")
-		..	'|t16:16:/BanditsUserInterface/textures/rmb.dds|t'	..((control.custom or control.widget) and " Remove" or " Blacklist")
-		..	(not control.widget and '\n|t16:16:/BanditsUserInterface/textures/mmb.dds|t'	.." Make widget" or "")
-	SetTooltipText(InformationTooltip, text)
 end
 
 local function UpdateChoices(target,id,clear)
@@ -1413,20 +1082,7 @@ local function UpdateChoices(target,id,clear)
 	end
 end
 
-ZO_Dialogs_RegisterCustomDialog("BUI_BUFFS_CONFIRMATION", {
-	gamepadInfo={dialogType=GAMEPAD_DIALOGS.BASIC, allowShowOnNextScene=true},
-	title={text=SI_CUSTOMER_SERVICE_SUBMIT_CONFIRMATION},
-	mainText=function(dialog) return {text=dialog.data.prompt} end,
-	buttons=
-		{
-			{text=SI_OK,callback=function(dialog)
-					dialog.data.var[dialog.data.id]=dialog.data.value
-					UpdateChoices(dialog.data.target,dialog.data.id,true)
-				end,keybind="DIALOG_PRIMARY",clickSound=SOUNDS.DIALOG_ACCEPT},
-			{text=SI_DIALOG_CANCEL,keybind="DIALOG_NEGATIVE",clickSound=SOUNDS.DIALOG_ACCEPT}
-		}
-	}
-)
+
 --[[
 local ErrorDialog={
 	gamepadInfo={dialogType=GAMEPAD_DIALOGS.BASIC, allowShowOnNextScene=true},
@@ -1440,35 +1096,61 @@ local ErrorDialog={
 ZO_Dialogs_RegisterCustomDialog("BUI_BUFFS_ERROR", ErrorDialog)
 --]]
 
-function BUI.Buffs.ButtonHandler(control,button)
-	if BUI.move then return end
-	local data=(control.passives) and BUI.PassiveBuffs[control.index] or BUI.PlayerBuffs[control.index]
-	local target
-	if button==1 then
-		if not control.custom and not control.widget then
-			target="Custom buffs"
-			BUI.Buffs.AddTo(BUI.Vars.CustomBuffs,data.id,target)
-		end
-	elseif button==2 then
-		if control.custom then
-			target="Custom buffs"
-			BUI.Buffs.RemoveFrom(BUI.Vars.CustomBuffs,BUI.CustomBuffs[control.index].id,target)
-		elseif control.widget then
-			target="Widgets"
-			BUI.Buffs.RemoveFrom(BUI.Vars.Widgets,control.index,target)
-		else
-			target="Black List"
-			BUI.Buffs.AddTo(BUI.Vars.BuffsBlackList,data.id,target)
-		end
-	elseif button==3 then
-		if not control.widget then
-			target="Widgets"
-			if control.custom then
-				BUI.Buffs.AddTo(BUI.Vars.Widgets,BUI.CustomBuffs[control.index].id,target)
-			else
-				BUI.Buffs.AddTo(BUI.Vars.Widgets,data.id,target)
+
+
+local function GroupSynergy(name,abilityId)
+	if name and BUI.Group[name] then
+--		d("["..abilityId.."] "..name..(BUI.Group[name] and " ("..BUI.Group[name].accname..")" or "").." used "..Synergy_Name[Synergy_id[abilityId]])
+		local index=BUI.Group[name].index
+		if index then
+			local now=GetGameTimeMilliseconds()
+			if not BUI.GroupSynergy[index] then BUI.GroupSynergy[index]={} end
+			BUI.GroupSynergy[index][abilityId]={t=now+20000}
+			if not BUI.GroupSynergyActive then
+				BUI.GroupSynergyActive=true
+				EVENT_MANAGER:RegisterForUpdate("BUI_GroupSynergy",1000,BUI.Frames.GroupSynergy)
+				BUI.Frames.GroupSynergy()
 			end
 		end
+	end
+end
+
+local function OnCombatEvent(_,result,isError,_,_,_,sourceName,_,_,_,hitValue,_,_,_,sourceUnitId,targetUnitId,abilityId)
+	if isError then return end
+	if string.gsub(sourceName,"%^%w+","")==BUI.Player.name then
+		local now=GetGameTimeMilliseconds()
+		--SynergyCd
+		if Synergy_id[abilityId] then
+			if BUI.Vars.EnableSynergyCd then
+				for i=1,4 do
+					if not(BUI.SynergyCd[i] and BUI.SynergyCd[i].id~=abilityId) then
+						BUI.SynergyCd[i]={
+							id		=abilityId,
+							Name		=Synergy_Name[ Synergy_id[abilityId] ],
+							Texture	=BUI.SynergyTexture[ Synergy_id[abilityId] ],
+							StartTime	=now,
+						}
+						break
+					end
+				end
+			elseif BUI.Vars.GroupSynergy~=3 then
+				GroupSynergy(BUI.Player.name,abilityId)
+			end
+			return
+		end
+		--Buffs
+		if ProcEffects[abilityId] then
+			BUI.Buffs.Effects[ProcEffects[abilityId].n]={id=abilityId,timeStarted=now/1000,timeEnding=now/1000+ProcEffects[abilityId].cd}
+		end
+		--Ability timers
+		if BUI.Vars.Actions then
+			if abilityId==40375 and BUI.Actions.AbilityBar[40372] then BUI.Actions.AbilityBar[40372].StartTime=now  BUI.Actions.AbilityBar[40372].Duration=BUI.GetAbilityDuration(40372)	--Trap
+			elseif abilityId==40385 and BUI.Actions.AbilityBar[40382] then BUI.Actions.AbilityBar[40382].StartTime=now BUI.Actions.AbilityBar[40382].Duration=BUI.GetAbilityDuration(40382)	--Trap
+			elseif abilityId==40468 and BUI.Actions.AbilityBar[40465] then BUI.Actions.AbilityBar[40465].StartTime=now BUI.Actions.AbilityBar[40465].Duration=BUI.GetAbilityDuration(40465)	--Scalding Rune
+			end
+		end
+	elseif Synergy_id[abilityId] and BUI.Vars.GroupSynergy~=3 then
+		GroupSynergy(BUI.GroupMembers[targetUnitId],abilityId)
 	end
 end
 
@@ -1532,59 +1214,392 @@ function BUI.FormatTime(t)
 	end
 end
 
-local function GroupSynergy(name,abilityId)
-	if name and BUI.Group[name] then
---		d("["..abilityId.."] "..name..(BUI.Group[name] and " ("..BUI.Group[name].accname..")" or "").." used "..Synergy_Name[Synergy_id[abilityId]])
-		local index=BUI.Group[name].index
-		if index then
-			local now=GetGameTimeMilliseconds()
-			if not BUI.GroupSynergy[index] then BUI.GroupSynergy[index]={} end
-			BUI.GroupSynergy[index][abilityId]={t=now+20000}
-			if not BUI.GroupSynergyActive then
-				BUI.GroupSynergyActive=true
-				EVENT_MANAGER:RegisterForUpdate("BUI_GroupSynergy",1000,BUI.Frames.GroupSynergy)
-				BUI.Frames.GroupSynergy()
-			end
+function BUI.GetFoodBuff()
+	for i=1, GetNumBuffs("player") do
+		local _,_,_,_,_,_,_,_,_,_,id=GetUnitBuffInfo("player",i)
+		if buffFood[id] and type(buffFood[id])=="table" then
+			return buffFood[id],id
 		end
+	end
+	return {}
+end
+
+function BUI.DismissPets()
+	for i=1, GetNumBuffs("player") do
+		local _,_,_,buffSlot,_,_,_,_,_,_,abilityId=GetUnitBuffInfo("player",i)
+		if CombatPet[abilityId] then CancelBuff(buffSlot) end
 	end
 end
 
-local function OnCombatEvent(_,result,isError,_,_,_,sourceName,_,_,_,hitValue,_,_,_,sourceUnitId,targetUnitId,abilityId)
-	if isError then return end
-	if string.gsub(sourceName,"%^%w+","")==BUI.Player.name then
-		local now=GetGameTimeMilliseconds()
-		--SynergyCd
-		if Synergy_id[abilityId] then
-			if BUI.Vars.EnableSynergyCd then
-				for i=1,4 do
-					if not(BUI.SynergyCd[i] and BUI.SynergyCd[i].id~=abilityId) then
-						BUI.SynergyCd[i]={
-							id		=abilityId,
-							Name		=Synergy_Name[ Synergy_id[abilityId] ],
-							Texture	=Synergy_Texture[ Synergy_id[abilityId] ],
-							StartTime	=now,
-						}
-						break
-					end
-				end
-			elseif BUI.Vars.GroupSynergy~=3 then
-				GroupSynergy(BUI.Player.name,abilityId)
+function BUI.Frames.PlayerBuffs_Init()
+	if BUI_BuffsP_Panel then BUI_BuffsP_Panel:SetHidden(true) end
+	if not BUI.Vars.PlayerBuffs then return end
+	local number	=16
+	local fs		=BUI.Vars.PlayerBuffSize/2.5	--16
+	local border	=4
+	local space		=3
+	local size		=BUI.Vars.PlayerBuffSize
+	--Create the Self Buffs frame container
+	local ui		=BUI.UI.Control(	"BUI_BuffsP",			BanditsUI,	{(size+space)*number-space,size},	BUI.Vars.BUI_BuffsP,		false)
+	ui.backdrop		=BUI.UI.Backdrop(	"BUI_BuffsP_BG",			ui,		"inherit",					{CENTER,CENTER,0,0},		{0,0,0,0.4}, {0,0,0,1}, nil, true) --ui.backdrop:SetEdgeTexture("",16,4,4)
+	ui.label		=BUI.UI.Label(	"BUI_BuffsP_Label",		ui.backdrop,	"inherit",				{CENTER,CENTER,0,0},		BUI.UI.Font("standard",20,true), nil, {1,1}, BUI.Loc("PBuffsLabel"))
+	ui:SetAlpha(BUI.Vars.FrameOpacityOut/100)
+	ui:SetDrawLayer(DT_HIGH)
+	ui:SetMovable(true)
+	ui:SetHandler("OnMouseUp", function(self) BUI.Menu:SaveAnchor(self) end)
+	ui.base		=BUI.UI.Control(	"BUI_BuffsP_Panel",		ui,		{size,size},				{BUI.Vars.PlayerBuffsAlign,BUI.Vars.PlayerBuffsAlign,0,0},		false)
+	local anchor	={LEFT,LEFT,0,0,ui.base}
+	--Iterate over Buffs
+	for i=1, number do
+	local ability	=BUI.UI.Backdrop(	"BUI_BuffsP"..i,			ui.base,	{size,size},				anchor,				theme_color, theme_color, BUI.abilityframe, true)
+	ability:SetDrawLayer(0) ability:SetEdgeTexture("",8,4,4)
+--	local ability	=BUI.UI.Statusbar("BUI_BuffsP"..i,			ui.base,	{size,size},				anchor,				{1,1,1,1},texture, false)
+	ability.icon	=BUI.UI.Statusbar("BUI_BuffsP"..i.."_Icon",	ability,	{size-border,size-border},		{CENTER,CENTER,0,0},		{1,1,1,1},'', false)
+	ability.icon:SetDrawLayer(0)
+	ability.label	=BUI.UI.Label(	"BUI_BuffsP"..i.."_Label",	ability,	{size,size},				{TOP,TOP,0,0},			BUI.UI.Font(BUI.Vars.FrameFont1,fs-2,true), nil, {1,2}, '', false)
+	ability.label:SetDrawLayer(1)
+	ability.timer	=BUI.UI.Label(	"BUI_BuffsP"..i.."_Timer",	ability,	{fs*4,fs},					{BOTTOM,BOTTOM,0,-5},		BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {1,2}, '', false)
+	ability.timer:SetDrawLayer(1)
+	ability.count	=BUI.UI.Label(	"BUI_BuffsP"..i.."_Count",	ability,	{fs*2,fs},					{TOPRIGHT,TOPRIGHT,0,0},	BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {2,2}, '', false)
+	ability.count:SetDrawLayer(2)
+	--Extra settings
+	ability.index=i
+	ability:SetMouseEnabled(true)
+	ability:SetHandler("OnMouseDown", function(self,button) BUI.Buffs.ButtonHandler(self,button) end)
+	ability:SetHandler("OnMouseEnter", BUI.Buffs.ShowTooltip)
+	ability:SetHandler("OnMouseExit", function()ClearTooltip(InformationTooltip)end)
+	anchor={LEFT,RIGHT,space,0,ability}
+	end
+end
+
+function BUI.Frames.CustomBuffs_Init()
+	local number	=12
+	for i=1, number do control=_G["BUI_BuffsC"..i] if control~=nil then control:SetHidden(true) end end
+	if not BUI.Vars.EnableCustomBuffs then return end
+	local fs		=BUI.Vars.CustomBuffSize/2.5	--16
+	local border	=4
+	local space		=3
+	local w		=BUI.Vars.CustomBuffsPWidth
+	local size		=BUI.Vars.CustomBuffSize
+	local ph		=size<=36 and 8 or math.floor(size/4)
+	local dimensions	=BUI.Vars.CustomBuffsDirection=="horisontal" and {(size+space)*number-space,size} or {size+space+w,(size+space)*number-space}
+	local side		=BUI.Vars.CustomBuffsPSide=="right"
+	--Create the Self Buffs frame container
+	local ui	=BUI.UI.Control(	"BUI_BuffsC",			BanditsUI,	dimensions,				BUI.Vars.BUI_BuffsC,		false)
+	ui.backdrop	=BUI.UI.Backdrop(	"BUI_BuffsC_BG",			ui,	"inherit",				{CENTER,CENTER,0,0},		{0,0,0,0.4}, {0,0,0,1}, nil, true) --ui.backdrop:SetEdgeTexture("",16,4,4)
+	ui.label	=BUI.UI.Label(	"BUI_BuffsC_Label",		ui.backdrop,	"inherit",				{CENTER,CENTER,0,0},		BUI.UI.Font("standard",20,true), nil, {1,1}, BUI.Loc("CBuffsLabel"))
+	ui:SetAlpha(BUI.Vars.FrameOpacityOut/100)
+	ui:SetDrawLayer(DT_HIGH)
+	ui:SetMovable(true)
+	ui:SetHandler("OnMouseUp", function(self) BUI.Menu:SaveAnchor(self) end)
+	ui.base		=BUI.UI.Control("BUI_BuffsC_Base",		ui,	dimensions,	{TOPLEFT,TOPLEFT,0,0})
+	--Iterate over Buffs
+	local anchor	={BOTTOMLEFT,BOTTOMLEFT,0,0,ui.base}
+	local bar_texture=side and "/BanditsUserInterface/textures/theme/progressbar_right_2.dds" or "/BanditsUserInterface/textures/theme/progressbar_left_2.dds"
+	for i=1, number do
+	local ability	=BUI.UI.Control(	"BUI_BuffsC"..i,			ui.base,	{size,size},			anchor,				true)
+	ability.bg		=BUI.UI.Backdrop(	"BUI_BuffsC"..i.."_BG",		ability,	{size,size},			{CENTER,CENTER,0,0},		theme_color, theme_color, BUI.abilityframe, false)
+	ability.bg:SetDrawLayer(0) ability.bg:SetEdgeTexture("",8,4,4)
+	ability.icon	=BUI.UI.Statusbar("BUI_BuffsC"..i.."_Icon",	ability.bg,	{size-border,size-border},	{CENTER,CENTER,0,0},		{1,1,1,1},'', false)
+	ability.icon:SetDrawLayer(0)
+	ability.label	=BUI.UI.Label(	"BUI_BuffsC"..i.."_Label",	ability,	{size,size},			{TOPLEFT,TOPLEFT,0,0},		BUI.UI.Font(BUI.Vars.FrameFont1,fs-2,true), nil, {1,2}, '', false)
+	ability.label:SetDrawLayer(1)
+	ability.timer	=BUI.UI.Label(	"BUI_BuffsC"..i.."_Timer",	ability,	{fs*4,fs},				{BOTTOM,BOTTOM,0,-5},		BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {1,2}, '', false)
+	ability.timer:SetDrawLayer(1)
+	ability.count	=BUI.UI.Label(	"BUI_BuffsC"..i.."_Count",	ability,	{fs*2,fs},				{TOPRIGHT,TOPRIGHT,0,0},	BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {2,2}, '', false)
+	ability.count:SetDrawLayer(2)
+	anchor=side and {LEFT,RIGHT,space,0} or {RIGHT,LEFT,-space,0}
+	ability.progress	=BUI.UI.Backdrop("BUI_BuffsC"..i.."_Progress",	ability,	{w,ph},				anchor,	{0,0,0,0}, {1,1,1,1}, nil, (not BUI.Vars.CustomBuffsProgress or BUI.Vars.CustomBuffsDirection=="horisontal"))
+	ability.progress:SetEdgeTexture(bar_texture,32,4,4) ability.progress:SetEdgeColor(unpack(theme_color))
+	if ph>8 then
+		ability.pbg	=BUI.UI.Backdrop("BUI_BuffsC"..i.."_pBg",		ability.progress,	{w-4,ph-4},			{TOPLEFT,TOPLEFT,2,2},	{0,0,0,1}, {0,0,0,0}, nil, false)
+	else
+		if ability.pbg then ability.pbg:SetHidden(true) end
+	end
+	ability.name	=BUI.UI.Label(	"BUI_BuffsC"..i.."_Name",	ability.progress,	{w,fs-2},			{BOTTOMLEFT,TOPLEFT,0,-space},	BUI.UI.Font("standard",fs-2,true), nil, {side and 0 or 2,2}, '', false)
+	anchor=side and {LEFT,LEFT,2,0} or {RIGHT,RIGHT,-2,0}
+	ability.bar		=BUI.UI.Statusbar("BUI_BuffsC"..i.."_Bar",	ability.progress,	{w-4,ph-4},			anchor,	prog_color, BUI.Textures[BUI.Vars.FramesTexture], false)
+	--Extra settings
+	ability.index=i
+	ability.custom=true
+	ability:SetMouseEnabled(true)
+	ability:SetHandler("OnMouseDown", function(self,button) BUI.Buffs.ButtonHandler(self,button) end)
+	ability:SetHandler("OnMouseEnter", BUI.Buffs.ShowTooltip)
+	ability:SetHandler("OnMouseExit", function()ClearTooltip(InformationTooltip)end)
+	anchor=BUI.Vars.CustomBuffsDirection=="horisontal" and {LEFT,RIGHT,space,0,ability} or {BOTTOM,TOP,0,-space,ability}
+	end
+end
+
+function BUI.Frames.SynergyCd_Init()
+	local number	=4
+	for i=1, number do control=_G["BUI_BuffsS"..i] if control~=nil then control:SetHidden(true) end end
+	if not BUI.Vars.EnableSynergyCd then return end
+	local fs		=BUI.Vars.SynergyCdSize/2.5	--16
+	local border	=6
+	local space		=3
+	local w		=BUI.Vars.SynergyCdPWidth
+	local size		=BUI.Vars.SynergyCdSize
+	local dimensions	=BUI.Vars.SynergyCdDirection=="horisontal" and {(size+space)*number-space,size} or {size+space+w,(size+space)*number-space}
+	local side		=BUI.Vars.SynergyCdPSide=="right"
+	--Create the Self Buffs frame container
+	local ui	=BUI.UI.Control(	"BUI_BuffsS",			BanditsUI,	dimensions,				BUI.Vars.BUI_BuffsS,		false)
+	ui.backdrop	=BUI.UI.Backdrop(	"BUI_BuffsS_BG",			ui,	"inherit",				{CENTER,CENTER,0,0},		{0,0,0,0.4}, {0,0,0,1}, nil, true) --ui.backdrop:SetEdgeTexture("",16,4,4)
+	ui.label	=BUI.UI.Label(	"BUI_BuffsS_Label",		ui.backdrop,	"inherit",				{CENTER,CENTER,0,0},		BUI.UI.Font("standard",20,true), nil, {1,1}, BUI.Loc("SBuffsLabel"))
+	ui:SetAlpha(BUI.Vars.FrameOpacityOut/100)
+	ui:SetDrawLayer(DT_HIGH)
+	ui:SetMovable(true)
+	ui:SetHandler("OnMouseUp", function(self) BUI.Menu:SaveAnchor(self) end)
+	ui.base		=BUI.UI.Control("BUI_BuffsS_Base",		ui,	dimensions,	{TOPLEFT,TOPLEFT,0,0})
+	--Iterate over Buffs
+	local anchor	={BOTTOMLEFT,BOTTOMLEFT,0,0,ui.base}
+	local bar_texture=side and "/BanditsUserInterface/textures/theme/progressbar_right_2.dds" or "/BanditsUserInterface/textures/theme/progressbar_left_2.dds"
+	for i=1, number do
+	local ability	=BUI.UI.Control(	"BUI_BuffsS"..i,			ui.base,	{size,size},			anchor,				true)
+	ability.bg		=BUI.UI.Backdrop(	"BUI_BuffsS"..i.."_BG",		ability,	{size,size},			{CENTER,CENTER,0,0},		{0,0,0,0}, theme_color, nil, false)
+	ability.bg:SetDrawLayer(0) ability.bg:SetEdgeTexture("",8,2,4)
+	ability.icon	=BUI.UI.Statusbar("BUI_BuffsS"..i.."_Icon",	ability.bg,	{size-border,size-border},	{CENTER,CENTER,0,0},		{1,1,1,1},'', false)
+	ability.icon:SetDrawLayer(0)
+--	ability.label	=BUI.UI.Label(	"BUI_BuffsS"..i.."_Label",	ability,	{size,size},			{TOPLEFT,TOPLEFT,0,0},		BUI.UI.Font(BUI.Vars.FrameFont1,fs-2,true), nil, {1,2}, '', false)
+--	ability.label:SetDrawLayer(1)
+	ability.timer	=BUI.UI.Label(	"BUI_BuffsS"..i.."_Timer",	ability,	{fs*4,fs},				{BOTTOM,BOTTOM,0,-5},		BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {1,2}, '', false)
+	ability.timer:SetDrawLayer(1)
+	anchor=side and {LEFT,RIGHT,space,0} or {RIGHT,LEFT,-space,0}
+	ability.progress	=BUI.UI.Backdrop("BUI_BuffsS"..i.."_Progress",	ability,	{w,8},				anchor,	{0,0,0,0}, {1,1,1,1}, nil, not BUI.Vars.SynergyCdProgress)
+	ability.progress:SetEdgeTexture(bar_texture,32,4,4) ability.progress:SetEdgeColor(unpack(theme_color))
+	ability.progress:SetAlpha(.8)
+	ability.name	=BUI.UI.Label(	"BUI_BuffsS"..i.."_Name",	ability.progress,	{w,fs-2},		{BOTTOMLEFT,TOPLEFT,0,-space},	BUI.UI.Font("standard",fs-2,true), nil, {side and 0 or 2,2}, '', false)
+	anchor=side and {LEFT,LEFT,2,0} or {RIGHT,RIGHT,-2,0}
+	ability.bar		=BUI.UI.Statusbar("BUI_BuffsS"..i.."_Bar",	ability.progress,	{w-2,8-4},		anchor,	prog_color, BUI.Textures[BUI.Vars.FramesTexture], false)
+	--Extra settings
+	ability.index=i
+	ability.custom=true
+	ability:SetMouseEnabled(true)
+	ability:SetHandler("OnMouseEnter", BUI.Buffs.ShowTooltip)
+	ability:SetHandler("OnMouseExit", function()ClearTooltip(InformationTooltip)end)
+	anchor=BUI.Vars.SynergyCdDirection=="horisontal" and {LEFT,RIGHT,space,0,ability} or {BOTTOM,TOP,0,-space,ability}
+	end
+end
+
+function BUI.Frames.Widgets_Init(widget,dup)
+	local cm		=BUI.Vars.FrameMagickaColor
+	local fs		=BUI.Vars.WidgetsSize/2.5	--16
+	local border	=4
+	local space		=3
+	local w		=BUI.Vars.WidgetsPWidth
+	local size		=BUI.Vars.WidgetsSize
+	local ph		=size<=36 and 8 or math.floor(size/4)
+	local anchor	={CENTER,CENTER,400,350}
+	local widgets
+	if widget then
+		widgets={[string.gsub(widget,"BUI_Widget_","")]=true}
+	else
+		widgets=BUI.Vars.Widgets
+		widgets["Potion"]=BUI.Vars.WidgetPotion
+	end
+	for _id,enable in pairs(widgets) do
+	if enable then
+	local icon,name,side
+	local id=string.gsub(_id," ","_")
+	local data=BUI.Vars["BUI_Widget_"..id]
+	if data then anchor=data or anchor side=anchor[6] else data={} end
+	if data[11]~=true then
+	anchor=dup and {TOP,BOTTOM,0,space+(size+space)*(dup-1),_G["BUI_Widget_"..id]} or anchor
+	local bar_texture=side and "/BanditsUserInterface/textures/theme/progressbar_left_2.dds" or "/BanditsUserInterface/textures/theme/progressbar_right_2.dds"
+	local fname		="BUI_Widget_"..id..(dup and "_"..dup or "")
+	local ability	=BUI.UI.Control(	fname,	BanditsUI,	{size,size},	anchor,	not widget and not data[12])
+	local id_check=tonumber(id)
+	if id_check then
+		icon=GetAbilityIcon(id_check)
+		name=GetAbilityName(id_check)
+		ability.duration=BUI.GetAbilityDuration(id_check)
+	else
+		icon=_id=="Potion" and PotionIcon[BUI.MainPower] or "/esoui/art/icons/icon_missing.dds"
+		name=_id
+	end
+	ability.init=false
+	ability.bg		=BUI.UI.Backdrop(	fname.."_BG",	ability,	{size,size},			{CENTER,CENTER,0,0},		theme_color, theme_color, BUI.abilityframe, false)
+	ability.bg:SetDrawLayer(0) ability.bg:SetEdgeTexture("",8,4,4)
+	ability.icon	=BUI.UI.Statusbar(fname.."_Icon",	ability.bg,	{size-border,size-border},	{CENTER,CENTER,0,0},		{1,1,1,1}, icon, false)
+	ability.icon:SetDrawLayer(0)
+--[[
+	if BUI.Vars.DeveloperMode then
+	ability.label	=BUI.UI.Label(	fname.."_Label",	ability,	{size,size},			{TOPLEFT,TOPLEFT,0,0},		BUI.UI.Font(BUI.Vars.FrameFont1,fs-2,true), nil, {1,0}, id_check or '', false)
+	ability.label:SetDrawLayer(1)
+	end
+--]]
+	ability.timer	=BUI.UI.Label(	fname.."_Timer",	ability,	{fs*4,fs},				{BOTTOM,BOTTOM,0,-5},		BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {1,2}, '', false)
+	ability.timer:SetDrawLayer(1)
+	ability.count	=BUI.UI.Label(	fname.."_Count",	ability,	{size,size},			{TOP,TOP,0,0},			BUI.UI.Font(BUI.Vars.FrameFont1,size/2,true,true), nil, {2,0}, '', false)
+	ability.count:SetDrawLayer(2)
+	anchor=side and {RIGHT,LEFT,-space,0} or {LEFT,RIGHT,space,0}
+	ability.progress	=BUI.UI.Backdrop(fname.."_Progress",	ability,	{w,ph},			anchor,	{0,0,0,0}, {1,1,1,1}, nil, true)	--not data[8])
+	ability.progress:SetEdgeTexture(bar_texture,32,4,4) ability.progress:SetEdgeColor(unpack(theme_color))
+	if ph>8 then
+		ability.pbg	=BUI.UI.Backdrop(fname.."_pBg",	ability.progress,	{w-4,ph-4},			{TOPLEFT,TOPLEFT,2,2},	{0,0,0,1}, {0,0,0,0}, nil, false)
+	else
+		local frame=_G[fname.."_pBg"] if frame then frame:SetHidden(true) end
+	end
+--	ability.progress:SetAlpha(.8)
+	anchor=side and {BOTTOMRIGHT,TOPRIGHT,0,-space} or {BOTTOMLEFT,TOPLEFT,0,-space}
+	ability.name	=BUI.UI.Label(	fname.."_Name",	ability.progress,	{w,fs-2},			anchor,	BUI.UI.Font("standard",fs-2,true), nil, {(side and 2 or 0),0}, name, false)
+	anchor=side and {TOPRIGHT,BOTTOMRIGHT,0,-space} or {TOPLEFT,BOTTOMLEFT,0,-space}
+--	ability.tName	=BUI.UI.Label(	fname.."_Target",	ability.progress,	{w,fs-2},			anchor,	BUI.UI.Font("standard",fs-2,true), nil, {(side and 2 or 0),0}, "", false)
+	anchor=side and {RIGHT,RIGHT,-2,0} or {LEFT,LEFT,2,0}
+	ability.bar		=BUI.UI.Statusbar(fname.."_Bar",	ability.progress,	{w-4,ph-4},			anchor,	prog_color, BUI.Textures[BUI.Vars.FramesTexture], false)
+	ability.bar1	=BUI.UI.Statusbar(fname.."_Bar1",	ability.progress,	{w-4,ph-4},			anchor,	cm, BUI.Textures[BUI.Vars.FramesTexture], true)
+	ability.bar1:SetAlpha(.75)
+	--Extra settings
+	ability.index=_id
+	ability.widget=true
+	if dup then return ability end
+	ability:SetMouseEnabled(true)
+	ability:SetHandler("OnMouseDown", function(self,button) BUI.Buffs.ButtonHandler(self,button) end)
+	ability:SetHandler("OnMoveStop", function(self) BUI.Menu:SaveAnchor(self,nil,nil,nil,side,data[7],data[8],data[9],data[10],data[11],data[12],data[13]) end)
+	ability:SetHandler("OnMouseEnter", BUI.Buffs.ShowTooltip)
+	ability:SetHandler("OnMouseExit", function()ClearTooltip(InformationTooltip)end)
+--	ability:SetDrawTier(DT_HIGH)
+	anchor={BOTTOM,TOP,0,-space,ability}
+	end
+	end
+	end
+end
+
+function BUI.Frames.PassiveBuffs_Init()
+	local number	=16
+	for i=1, number do control=_G["BUI_BuffsPas"..i] if control~=nil then control:SetHidden(true) end end
+	if not BUI.Vars.PlayerBuffs or BUI.Vars.BuffsPassives~="On additional panel" then return end
+	local fs		=BUI.Vars.PassiveBuffSize/2.5	--16
+	local border	=4
+	local space		=3
+	local w		=BUI.Vars.PassivePWidth
+	local size		=BUI.Vars.PassiveBuffSize
+	local side		=BUI.Vars.PassivePSide=="right"
+	--Create the Self Buffs frame container
+	local ui	=BUI.UI.Control(	"BUI_BuffsPas",			BanditsUI,	{size,(size+space)*number-space},	BUI.Vars.BUI_BuffsPas,		false)
+	ui.backdrop	=BUI.UI.Backdrop(	"BUI_BuffsPas_BG",		ui,	"inherit",					{BOTTOM,BOTTOM,0,0},		{0,0,0,0.4}, {0,0,0,1}, nil, true) --ui.backdrop:SetEdgeTexture("",16,4,4)
+	ui.label	=BUI.UI.Label(	"BUI_BuffsPas_Label",		ui.backdrop,	"inherit",					{CENTER,CENTER,0,0},		BUI.UI.Font("standard",20,true), nil, {1,1}, BUI.Loc("PasBuffsLabel"))
+	ui:SetAlpha(BUI.Vars.FrameOpacityOut/100)
+	ui:SetDrawLayer(DT_HIGH)
+	ui:SetMovable(true)
+	ui:SetHandler("OnMouseUp", function(self) BUI.Menu:SaveAnchor(self) end)
+	ui.base		=BUI.UI.Control("BUI_BuffsPas_Base",		ui,	"inherit",	{BOTTOMLEFT,BOTTOMLEFT,0,0})
+	--Iterate over Buffs
+	local anchor	={BOTTOM,BOTTOM,0,0,ui.base}
+	local bar_texture	=side and "/BanditsUserInterface/textures/theme/progressbar_right_2.dds" or "/BanditsUserInterface/textures/theme/progressbar_left_2.dds"
+	for i=1, number do
+	local color={.4,.4,.4,.6}
+	local ability	=BUI.UI.Backdrop(	"BUI_BuffsPas"..i,		ui.base,	{size,size},			anchor,				theme_color, color, BUI.abilityframe, true)
+	ability:SetDrawLayer(0) ability:SetEdgeTexture("",8,4,4)
+	ability.icon	=BUI.UI.Statusbar("BUI_BuffsPas"..i.."_Icon",	ability,	{size-border,size-border},	{CENTER,CENTER,0,0},		{1,1,1,1},'', false)
+	ability.icon:SetDrawLayer(0)
+	ability.label	=BUI.UI.Label(	"BUI_BuffsPas"..i.."_Label",	ability,	{size,size},			{TOPLEFT,TOPLEFT,0,0},		BUI.UI.Font(BUI.Vars.FrameFont1,fs-2,true), nil, {1,2}, '', false)
+	ability.label:SetDrawLayer(1)
+	ability.timer	=BUI.UI.Label(	"BUI_BuffsPas"..i.."_Timer",	ability,	{fs*4,fs},				{BOTTOM,BOTTOM,0,-5},		BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {1,2}, '', false)
+	ability.timer:SetDrawLayer(1)
+	ability.count	=BUI.UI.Label(	"BUI_BuffsPas"..i.."_Count",	ability,	{fs*2,fs},				{TOPRIGHT,TOPRIGHT,0,0},	BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {2,2}, '', false)
+	ability.count:SetDrawLayer(2)
+	anchor=side and {LEFT,RIGHT,space,0} or {RIGHT,LEFT,-space,0}
+	ability.progress	=BUI.UI.Backdrop(	"BUI_BuffsPas"..i.."_Progress",	ability,	{w,8},			anchor,	{0,0,0,0}, {1,1,1,1}, nil, not BUI.Vars.PassiveProgress)
+	ability.progress:SetEdgeTexture(bar_texture,32,4,4) ability.progress:SetEdgeColor(unpack(theme_color))
+	ability.name	=BUI.UI.Label(	"BUI_BuffsPas"..i.."_Name",	ability.progress,	{w,fs-2},			{BOTTOMRIGHT,TOPRIGHT,0,-space},	BUI.UI.Font("standard",fs-2,true), nil, {side and 0 or 2,2}, '', false)
+	anchor=side and {LEFT,LEFT,2,0} or {RIGHT,RIGHT,-2,0}
+	ability.bar		=BUI.UI.Statusbar("BUI_BuffsPas"..i.."_Bar",	ability.progress,	{w-4,8-4},			anchor,	prog_color, BUI.Textures[BUI.Vars.FramesTexture], false)
+	--Extra settings
+	ability.index=i
+	ability.passives=true
+	ability:SetMouseEnabled(true)
+	ability:SetHandler("OnMouseDown", function(self,button) BUI.Buffs.ButtonHandler(self,button) end)
+	ability:SetHandler("OnMouseEnter", BUI.Buffs.ShowTooltip)
+	ability:SetHandler("OnMouseExit", function()ClearTooltip(InformationTooltip)end)
+	anchor={BOTTOM,TOP,0,-space,ability}
+	end
+end
+
+function BUI.Frames.TargetBuffs_Init()
+	if BUI_BuffsT_Panel then BUI_BuffsT_Panel:SetHidden(true) end
+	if not BUI.Vars.TargetBuffs then return end
+	local fs		=BUI.Vars.TargetBuffSize/2.5	--16
+	local k		=1.16
+	local space		=3
+	local size		=BUI.Vars.TargetBuffSize
+	local number	=15
+	--Create the target buffs frame container
+	local ui		=BUI.UI.Control(	"BUI_BuffsT",			BanditsUI,	{(size+space)*number-space,size},	BUI.Vars.BUI_BuffsT,		false)
+	ui.backdrop	=BUI.UI.Backdrop(	"BUI_BuffsT_BG",				ui,	"inherit",					{CENTER,CENTER,0,0},		{0,0,0,0.4}, {0,0,0,1}, nil, true) --ui.backdrop:SetEdgeTexture("",16,4,4)
+	ui.label		=BUI.UI.Label(	"BUI_BuffsT_Label",		ui.backdrop,	"inherit",			{CENTER,CENTER,0,0},		BUI.UI.Font("standard",20,true), nil, {1,1}, BUI.Loc("TBuffsLabel"))
+	ui:SetAlpha(BUI.Vars.FrameOpacityOut/100)
+	ui:SetDrawLayer(DT_HIGH)
+	ui:SetMovable(true)
+	ui:SetHandler("OnMouseUp", function(self) BUI.Menu:SaveAnchor(self) end)
+	ui.base		=BUI.UI.Control(	"BUI_BuffsT_Panel",		ui,	{size,size},				{BUI.Vars.TargetBuffsAlign,BUI.Vars.TargetBuffsAlign,0,0})
+	local anchor	={LEFT,LEFT,0,0,ui.base}
+	--Iterate over Buffs
+	for i=1, number do
+	local ability	=BUI.UI.Backdrop(	"BUI_BuffsT"..i,			ui.base,	{size,size},			anchor,				theme_color, theme_color, BUI.abilityframe, true)
+--	ability.debuff	=BUI.UI.Statusbar("BUI_BuffsT"..i.."_Debuff",	ability,	{size,size/2},			{BOTTOM,TOP,0,0},			{1,1,1,1},'/BanditsUserInterface/textures/debuff.dds', true)
+	ability:SetDrawLayer(0) ability:SetEdgeTexture("",8,2,4)
+	ability.icon	=BUI.UI.Statusbar("BUI_BuffsT"..i.."_Icon",	ability,	{size/k,size/k},			{CENTER,CENTER,0,0},		{1,1,1,1},'', false)
+	ability.icon:SetDrawLayer(1)
+	ability.label	=BUI.UI.Label(	"BUI_BuffsT"..i.."_Label",	ability,	{size,size},			{TOP,TOP,0,0},			BUI.UI.Font(BUI.Vars.FrameFont1,fs-2,true), nil, {1,2}, '', false)
+	ability.label:SetDrawLayer(2)
+	ability.timer	=BUI.UI.Label(	"BUI_BuffsT"..i.."_Timer",	ability,	{fs*4,fs},				{BOTTOM,BOTTOM,0,-5},		BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {1,2}, '', false)
+	ability.timer:SetDrawLayer(2)
+	ability.count	=BUI.UI.Label(	"BUI_BuffsT"..i.."_Count",	ability,	{fs*2,fs},				{TOPRIGHT,TOPRIGHT,0,0},	BUI.UI.Font(BUI.Vars.FrameFont1,fs,true,true), nil, {2,2}, '', false)
+	ability.count:SetDrawLayer(2)
+	--Extra settings
+	anchor={LEFT,RIGHT,space,0,ability}
+	end
+end
+
+function BUI.Buffs.ShowTooltip(control)
+	local data=control.passives and BUI.PassiveBuffs[control.index] or (control.custom and BUI.CustomBuffs[control.index] or (control.widget and BUI.Widgets[control.index] or BUI.PlayerBuffs[control.index]))
+	if not data or data.Blank then return end
+	if data.Target then for name in pairs(data) do if name~="Target" then data=data[name] break end end end
+	InitializeTooltip(InformationTooltip, control, BOTTOM, 0, -16)
+	InformationTooltip:AddLine(zo_strformat("<<C:1>>",data.Name),'$(BOLD_FONT)'..'|22',1,1,1)
+	local desc=type(data.id)=="number" and GetAbilityDescription(data.id) or ""
+	local text=	'|t300:8:/EsoUI/Art/Miscellaneous/horizontalDivider.dds|t\n'
+		..	'ID: |cFFFFFF'..data.id..'|r\n'
+		..	'Duration: |cFFFFFF'..(data.Duration and math.floor(data.Duration) or GetAbilityDuration(data.id)/1000)..' seconds|r\n'
+		..	'Type: |cFFFFFF'..(data.Positive and "Buff" or "Debuff")..'|r\n'
+		..	(data.Player and 'Cast by: |cFFFFFFPlayer|r\n' or '')
+		..	'|t300:8:/EsoUI/Art/Miscellaneous/horizontalDivider.dds|t\n'
+		..	(desc~='' and desc..'\n|t300:8:/EsoUI/Art/Miscellaneous/horizontalDivider.dds|t\n' or '')
+		..	((not control.custom and not control.widget) and '|t16:16:/BanditsUserInterface/textures/lmb.dds|t'	.." Add to custom " or "")
+		..	'|t16:16:/BanditsUserInterface/textures/rmb.dds|t'	..((control.custom or control.widget) and " Remove" or " Blacklist")
+		..	(not control.widget and '\n|t16:16:/BanditsUserInterface/textures/mmb.dds|t'	.." Make widget" or "")
+	SetTooltipText(InformationTooltip, text)
+end
+
+function BUI.Buffs.ButtonHandler(control,button)
+	if BUI.move then return end
+	local data=(control.passives) and BUI.PassiveBuffs[control.index] or BUI.PlayerBuffs[control.index]
+	local target
+	if button==1 then
+		if not control.custom and not control.widget then
+			target="Custom buffs"
+			BUI.Buffs.AddTo(BUI.Vars.CustomBuffs,data.id,target)
+		end
+	elseif button==2 then
+		if control.custom then
+			target="Custom buffs"
+			BUI.Buffs.RemoveFrom(BUI.Vars.CustomBuffs,BUI.CustomBuffs[control.index].id,target)
+		elseif control.widget then
+			target="Widgets"
+			BUI.Buffs.RemoveFrom(BUI.Vars.Widgets,control.index,target)
+		else
+			target="Black List"
+			BUI.Buffs.AddTo(BUI.Vars.BuffsBlackList,data.id,target)
+		end
+	elseif button==3 then
+		if not control.widget then
+			target="Widgets"
+			if control.custom then
+				BUI.Buffs.AddTo(BUI.Vars.Widgets,BUI.CustomBuffs[control.index].id,target)
+			else
+				BUI.Buffs.AddTo(BUI.Vars.Widgets,data.id,target)
 			end
-			return
 		end
-		--Buffs
-		if ProcEffects[abilityId] then
-			BUI.Buffs.Effects[ProcEffects[abilityId].n]={id=abilityId,timeStarted=now/1000,timeEnding=now/1000+ProcEffects[abilityId].cd}
-		end
-		--Ability timers
-		if BUI.Vars.Actions then
-			if abilityId==40375 and BUI.Actions.AbilityBar[40372] then BUI.Actions.AbilityBar[40372].StartTime=now  BUI.Actions.AbilityBar[40372].Duration=BUI.GetAbilityDuration(40372)	--Trap
-			elseif abilityId==40385 and BUI.Actions.AbilityBar[40382] then BUI.Actions.AbilityBar[40382].StartTime=now BUI.Actions.AbilityBar[40382].Duration=BUI.GetAbilityDuration(40382)	--Trap
-			elseif abilityId==40468 and BUI.Actions.AbilityBar[40465] then BUI.Actions.AbilityBar[40465].StartTime=now BUI.Actions.AbilityBar[40465].Duration=BUI.GetAbilityDuration(40465)	--Scalding Rune
-			end
-		end
-	elseif Synergy_id[abilityId] and BUI.Vars.GroupSynergy~=3 then
-		GroupSynergy(BUI.GroupMembers[targetUnitId],abilityId)
 	end
 end
 
@@ -1643,3 +1658,21 @@ function BUI.Buffs.Initialize()
 		end
 	end
 end
+
+ZO_Dialogs_RegisterCustomDialog("BUI_BUFFS_CONFIRMATION", {
+	gamepadInfo={dialogType=GAMEPAD_DIALOGS.BASIC, allowShowOnNextScene=true},
+	title={text=SI_CUSTOMER_SERVICE_SUBMIT_CONFIRMATION},
+	mainText=function(dialog) return {text=dialog.data.prompt} end,
+	buttons=
+		{
+			{text=SI_OK,callback=function(dialog)
+					dialog.data.var[dialog.data.id]=dialog.data.value
+					UpdateChoices(dialog.data.target,dialog.data.id,true)
+				end,keybind="DIALOG_PRIMARY",clickSound=SOUNDS.DIALOG_ACCEPT},
+			{text=SI_DIALOG_CANCEL,keybind="DIALOG_NEGATIVE",clickSound=SOUNDS.DIALOG_ACCEPT}
+		}
+	}
+)
+
+-- Legacy Export
+BUI.SynergyTexture = BUI.Buffs.SynergyTexture

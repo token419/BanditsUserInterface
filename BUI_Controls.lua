@@ -1,21 +1,18 @@
-local version=1.4
-if BUI and BUI.UI and BUI.UI.version>=version then return end
-BUI=BUI or {}
-BUI.UI={version=version}
-local number=1
-local base=BUI.name=="BanditsUserInterface"
+BUI.UI={}
+BUI.UI.version = 1.4
+BUI.UI.number = 1
+BUI.UI.base = BUI.name=="BanditsUserInterface"
+BUI.UI.fonts = {}
+BUI.UI.fonts.standard = "$(MEDIUM_FONT)"
+BUI.UI.fonts.esobold = "$(BOLD_FONT)"
+BUI.UI.fonts.antique = "EsoUI/Common/Fonts/ProseAntiquePSMT.otf"
+BUI.UI.fonts.handwritten = "EsoUI/Common/Fonts/Handwritten_Bold.otf"
+BUI.UI.fonts.trajan = "EsoUI/Common/Fonts/TrajanPro-Regular.otf"
+BUI.UI.fonts.futura = "EsoUI/Common/Fonts/FuturaStd-CondensedLight.otf"
+BUI.UI.fonts.futurabold = "EsoUI/Common/Fonts/FuturaStd-Condensed.otf"
+BUI.UI.fonts.gamepad_medium = "EsoUI/Common/Fonts/FTN57.otf"
+BUI.UI.fonts.gamepad_bold = "EsoUI/Common/Fonts/FTN87.otf"
 
-local fonts={
-	standard		="$(MEDIUM_FONT)",
-	esobold			="$(BOLD_FONT)",
-	antique			="EsoUI/Common/Fonts/ProseAntiquePSMT.otf",
-	handwritten		="EsoUI/Common/Fonts/Handwritten_Bold.otf",
-	trajan			="EsoUI/Common/Fonts/TrajanPro-Regular.otf",
-	futura			="EsoUI/Common/Fonts/FuturaStd-CondensedLight.otf",
-	futurabold		="EsoUI/Common/Fonts/FuturaStd-Condensed.otf",
-	gamepad_medium	="EsoUI/Common/Fonts/FTN57.otf",
-	gamepad_bold	="EsoUI/Common/Fonts/FTN87.otf",
-}
 --	/script BUI_PlayerFrame_HealthCurrent:SetFont(BUI.UI.Font("/EsoUI/Common/Fonts/FTN57.otf",17,true))
 
 local function Chain(object)
@@ -77,7 +74,7 @@ function BUI.UI.Control(name, parent, dims, anchor, hidden)
 	return control
 end
 
-function BUI.UI.Backdrop(name, parent, dims, anchor, center, edge, tex, hidden)	
+function BUI.UI.Backdrop(name, parent, dims, anchor, center, edge, tex, hidden)
 	--Validate arguments
 --	if (name==nil or name=="") then return end
 	parent=(parent==nil) and GuiRoot or parent
@@ -188,7 +185,10 @@ end
 
 function BUI.UI.Line(name, parent, dims, anchor, color, thickness, hidden)
 	--Validate arguments
-	if not name then name="BUI_UnnamedFrame"..number number=number+1 end
+	if not name then
+		name="BUI_UnnamedFrame"..BUI.UI.number
+		BUI.UI.number = BUI.UI.number + 1
+	end
 	parent=parent or GuiRoot
 	if (dims=="inherit" or #dims~=2) then dims={parent:GetWidth(), parent:GetHeight()} end
 	if (#anchor~=4 and #anchor~=5) then return end
@@ -213,7 +213,8 @@ function BUI.UI.Path(name, parent, anchors, color, thickness, hidden)
 	hidden=(hidden==nil) and false or hidden
 	--Create the line
 	for i=1, #anchors-1 do
-		name="BUI_UnnamedFrame"..number number=number+1
+		name = "BUI_UnnamedFrame"..BUI.UI.number
+		BUI.UI.number = BUI.UI.number + 1
 		local control=_G[name]
 		if (control==nil) then control=WINDOW_MANAGER:CreateControl(name, parent, CT_LINE) end
 		--Apply properties
@@ -408,7 +409,7 @@ function BUI.UI.CheckBox(name, parent, dims, anchor, value, func, tooltip, hidde
 			local color=self.value and color_on or color_norm
 			self:SetColor(unpack(color))
 		else
-			if base then
+			if BUI.UI.base then
 				if self.value then self:SetTextureCoords(.625,.75,0,1) else self:SetTextureCoords(.5,.625,0,1) end
 			else
 				if self.value then self:SetTexture("esoui/art/cadwell/checkboxicon_checked.dds") else self:SetTexture("esoui/art/cadwell/checkboxicon_unchecked.dds") end
@@ -460,7 +461,7 @@ function BUI.UI.Slider(name, parent, dims, anchor, hidden, func, MinMaxStep, tex
 	bg:SetCenterColor(0, 0, 0)
 	bg:SetAnchor(TOPLEFT, slider, TOPLEFT, 0, 4)
 	bg:SetAnchor(BOTTOMRIGHT, slider, BOTTOMRIGHT, 0, -4)
-	bg:SetEdgeTexture("EsoUI\\Art\\Tooltips\\UI-SliderBackdrop.dds", 32, 4) 
+	bg:SetEdgeTexture("EsoUI\\Art\\Tooltips\\UI-SliderBackdrop.dds", 32, 4)
 	--minText
 	control.minText=WINDOW_MANAGER:CreateControl(nil, slider, CT_LABEL)
 	control.minText:SetFont("ZoFontGameSmall")
@@ -543,7 +544,7 @@ function BUI.UI.ComboBox(name, parent, dims, anchor, array, val, fun, hidden, sc
 	if (dims=="inherit" or #dims~=2) then dims={parent:GetWidth(), parent:GetHeight()} end
 	if (#anchor~=4 and #anchor~=5) then return end
 	hidden=(hidden==nil) and false or hidden
-	--Create the control	
+	--Create the control
 	local control=_G[name] or WINDOW_MANAGER:CreateControlFromVirtual(name, parent, "ZO_ComboBox")
 	control:GetNamedChild("BGMungeOverlay"):SetHidden(true)
 	--Apply properties
@@ -551,7 +552,7 @@ function BUI.UI.ComboBox(name, parent, dims, anchor, array, val, fun, hidden, sc
 	control:ClearAnchors()
 	control:SetAnchor(anchor[1], #anchor==5 and anchor[5] or parent, anchor[2], anchor[3], anchor[4])
 	control:SetHidden(hidden)
-	control.m_comboBox:SetSortsItems(false)	
+	control.m_comboBox:SetSortsItems(false)
 	local fs=math.min(18,dims[2]-8)
 	control.m_comboBox:SetFont(BUI.UI.Font("standard",fs,false))
 	if scroll and #array>20 then
@@ -714,9 +715,8 @@ function BUI.UI.ColorPicker(name, parent, dims, anchor, val, fun, hidden)
 	return control
 end
 
---Functions
 function BUI.UI.Font(font, size, shadow, outline)
-	local font=fonts[font] or font
+	local font=BUI.UI.fonts[font] or font
 	local size=size or 14
 	local shadow=shadow and '|soft-shadow-thick' or ''
 	if outline then shadow='|thick-outline' end
@@ -738,7 +738,7 @@ function BUI.UI.Expires(control)	--Animation
 	control.timeline:PlayFromStart()
 end
 
-function BUI.DisplayNumber(number,places)
+function BUI.UI.DisplayNumber(number, places)
 	--Determine thousands and decimal format
 	local thousands=BUI.language=="en" and "," or "."
 	local decimal=BUI.language=="en" and "." or ","
@@ -763,7 +763,7 @@ function BUI.DisplayNumber(number,places)
 	return output
 end
 
-function BUI.ColorString(r,g,b,a)
+function BUI.UI.ColorString(r, g, b, a)
 	a=a or 1
 	local rgb={math.min(r,1)*255*a, math.min(g,1)*255*a, math.min(b,1)*255*a}
 	local hexstring=""
@@ -780,11 +780,11 @@ function BUI.ColorString(r,g,b,a)
 	return hexstring
 end
 
-function BUI.GetIcon(texture,size)
+function BUI.UI.GetIcon(texture, size)
 	return string.format("|t%d:%d:%s|t",size,size,texture)
 end
 
-function BUI.TimeStamp(now)
+function BUI.UI.TimeStamp(now)
 	now=now or GetGameTimeMilliseconds()
 	local _time=math.floor(now/1000)
 	local _ms=tostring(math.floor((now-_time*1000)/10)).."0" for i=1,2 do if string.len(_ms)<3 then _ms="0".._ms end end
@@ -792,7 +792,7 @@ function BUI.TimeStamp(now)
 	return _timestamp.."|cCCCCCC "
 end
 
-function BUI.CallLater(name,ms,func,opt1,opt2)
+function BUI.UI.CallLater(name, ms, func, opt1, opt2)
 	if ms then
 		EVENT_MANAGER:RegisterForUpdate("CallLater_"..name, ms,
 		function()
@@ -803,3 +803,10 @@ function BUI.CallLater(name,ms,func,opt1,opt2)
 		EVENT_MANAGER:UnregisterForUpdate("CallLater_"..name)
 	end
 end
+
+-- Compatibility Exports, Should recaftor the non BUI.UI functions defined here out of calling code
+BUI.DisplayNumber = BUI.UI.DisplayNumber
+BUI.ColorString = BUI.UI.ColorString
+BUI.GetIcon = BUI.UI.GetIcon
+BUI.TimeStamp = BUI.UI.TimeStamp
+BUI.CallLater = BUI.UI.CallLater
