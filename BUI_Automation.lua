@@ -144,15 +144,20 @@ local function IsItemType(slotIndex, Type)
 --	if GeodeContainer[id] then return false end
 	if ItemTypes[Type][itemType] and not IgnoreItemId[id] then
 		local usable, onlyFromActionSlot=IsItemUsable(BAG_BACKPACK, slotIndex)
+		local notLegendary = GetItemQuality(BAG_BACKPACK, slotIndex)<ITEM_QUALITY_LEGENDARY
+		local projectedCurrency = GetCurrencyAmount(CURT_CHAOTIC_CREATIA, CURRENCY_LOCATION_ACCOUNT)+GetLootCurrency(CURT_CHAOTIC_CREATIA)
+		local maxCurrency = GetMaxPossibleCurrency(CURT_CHAOTIC_CREATIA, CURRENCY_LOCATION_ACCOUNT)
+
 		return usable and not onlyFromActionSlot
 			and CanInteractWithItem(BAG_BACKPACK, slotIndex)
 			and (
 				WhiteList[Type][id]
 				or (
-					GetItemQuality(BAG_BACKPACK, slotIndex)<ITEM_QUALITY_LEGENDARY
+					notLegendary
 					and (
 						not GeodeContainer[id]
-						or GetCurrencyAmount(CURT_CHAOTIC_CREATIA, CURRENCY_LOCATION_ACCOUNT)+GetLootCurrency(CURT_CHAOTIC_CREATIA)<=GetMaxPossibleCurrency(CURT_CHAOTIC_CREATIA, CURRENCY_LOCATION_ACCOUNT)
+						-- or GetMaxPossibleCurrency(CURT_CHAOTIC_CREATIA, CURRENCY_LOCATION_ACCOUNT)-GetCurrencyAmount(CURT_CHAOTIC_CREATIA, CURRENCY_LOCATION_ACCOUNT)>GeodeContainer[id])
+						or projectedCurrency >= maxCurrency
 					)
 				)
 			)
