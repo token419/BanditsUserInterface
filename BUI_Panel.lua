@@ -91,6 +91,7 @@ BUI.SidePanel.Assistans.Trader[3] = 8995 -- Peddler of Prizes, the Merchant
 BUI.SidePanel.Assistans.Trader[4] = 9744 -- Factotum Commerce Delegate
 BUI.SidePanel.Assistans.Trader[5] = 11059 -- Hoarfrost, Takubar Trader
 BUI.SidePanel.Assistans.Trader[6] = 12414 -- Xyn, Planar Purveyor
+BUI.SidePanel.Assistans.Trader[6] = 13066 -- Terilorne, Dibellan Freetrader
 
 -- Sidebar Disabled
 BUI.SidePanel.Disabled = {}
